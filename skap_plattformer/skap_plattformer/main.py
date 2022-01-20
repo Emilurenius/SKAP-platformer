@@ -183,6 +183,8 @@ class MyGame(arcade.Window):
             self.down_pressed = True
         if key == arcade.key.RIGHT or key == arcade.key.D:
             self.right_pressed = True
+        if key == arcade.key.ESC:
+            self.setup()
 
     def on_key_release(self, key, modifiers):
         #Called when a key is released

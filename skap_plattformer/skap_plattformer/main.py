@@ -22,7 +22,7 @@ PLAYER_START_X = 100
 #Pixels per frame
 PLAYER_WALK_SPEED = 8
 PLAYER_JUMP_SPEED = 15
-PLAYER_COMBO_JUMP_BOOST = 4
+PLAYER_COMBO_JUMP_BOOST = 2
 PLAYER_COMBO_JUMP_TIMER = 7
 PLAYER_MAX_JUMP_COMBO = 2
 
@@ -80,9 +80,6 @@ class MyGame(arcade.Window):
         # Scene object
         self.scene = None
 
-        # separate variable for the player sprite
-        self.player_sprite = None
-
         # Physics engine
         self.physics_engine = None
 
@@ -105,8 +102,9 @@ class MyGame(arcade.Window):
         
         # Set background color
         arcade.set_background_color(BLUE)
-        
-        # Variables for control buttons
+
+        # variables relating to the player
+        self.player_sprite = None
         self.left_pressed = False
         self.right_pressed = False
         self.up_pressed = False
@@ -148,6 +146,7 @@ class MyGame(arcade.Window):
         self.player_sprite.combo_jump_timer = 0
         self.player_sprite.combo_jumps = 0
         self.player_sprite.inAir = False
+        self.player_sprite.onLadder = False
         
         
 
@@ -160,7 +159,7 @@ class MyGame(arcade.Window):
 
         # Create physics engine
         self.physics_engine = arcade.PhysicsEnginePlatformer(
-            player_sprite = self.player_sprite, gravity_constant = GRAVITY, walls = self.scene["Ground"]
+            player_sprite = self.player_sprite, gravity_constant = 0, walls = [self.scene["Ground"], self.scene["Ice"]]
         )
 
         # Clock
@@ -198,8 +197,15 @@ class MyGame(arcade.Window):
         )
     
     def player_move(self):
+        
+        # region Useful variables for movement
+        ground = []
+        ground.append(arcade.get_sprites_at_point(
+            [self.player_sprite.bottom],
+        ))
 
-        #Jump mechanics
+
+        # region Jump mechanics
         if self.physics_engine.can_jump():
             
             self.player_sprite.inAir = False
@@ -239,8 +245,6 @@ class MyGame(arcade.Window):
                             self.player_sprite.combo_jumps = PLAYER_MAX_JUMP_COMBO
 
                         self.player_sprite.combo_jump_timer = PLAYER_COMBO_JUMP_TIMER
-
-
         else:
             self.player_sprite.inAir = True
         if not self.up_pressed:
@@ -248,15 +252,15 @@ class MyGame(arcade.Window):
         
         elif JUMP_DIFFICULTY == 2: #only gets checked if self.up_pressed is true
             self.player_sprite.newJump = False
+        # endregion
 
-        #Walking mechanics
+        # region Walking mechanics
         if self.left_pressed and not self.right_pressed:
             if self.player_sprite.change_x != -PLAYER_WALK_SPEED:
                 if self.player_sprite.change_x > -PLAYER_WALK_SPEED+PLAYER_WALK_ACCELERATION:
                     self.player_sprite.change_x -= PLAYER_WALK_ACCELERATION
                 else:
                     self.player_sprite.change_x = -PLAYER_WALK_SPEED
-
 
         elif self.right_pressed and not self.left_pressed:
             if self.player_sprite.change_x != PLAYER_WALK_SPEED:
@@ -275,11 +279,12 @@ class MyGame(arcade.Window):
                     self.player_sprite.change_x += PLAYER_SLOW_DOWN
                     if self.player_sprite.change_x > 0: 
                         self.player_sprite.change_x = 0
+        # endregion
 
     def on_update(self, delta_time):
         #This should be called 60 times per second
 
-        self.player_move()     
+             
         self.physics_engine.update()
         
         # Check if player fell off the map
@@ -288,10 +293,18 @@ class MyGame(arcade.Window):
             self.player_sprite.center_x = PLAYER_START_X
 
 
-        # See if we hit any coins
+        # region Check for misc collisions
+        
+        # Coins
         coin_hit_list = arcade.check_for_collision_with_list(
             self.player_sprite, self.scene["Coins"]
         )
+
+        # Ladder
+
+
+
+        # endregion
 
         # Loop through each coin we hit (if any) and remove it
         for coin in coin_hit_list:
@@ -311,6 +324,10 @@ class MyGame(arcade.Window):
         milliseconds = int((self.total_time-seconds)*100)
         self.clock_text = f"{minutes}:{seconds}:{milliseconds}"
 
+        #Move the player
+        self.player_move()
+
+        # Move the camera 
         self.center_camera_on_player()
 
     def on_key_press(self, key, modifiers):

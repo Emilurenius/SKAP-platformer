@@ -2,6 +2,11 @@
 Platformer Game
 """
 import arcade
+import os
+
+#More convenient way to find files
+def path(path):
+    return os.path.realpath(f"{__file__}/../../{path}")
 
 # Constants
 SCREEN_WIDTH = 1000
@@ -15,11 +20,22 @@ COIN_SCALING = 0.5
 SPRITE_PIXEL_SIZE = 128
 GRID_PIXEL_SIZE = SPRITE_PIXEL_SIZE * TILE_SCALING
 
-# Movement speed of player, in pixels per frame
-PLAYER_MOVEMENT_SPEED = 10
-GRAVITY = 1
-PLAYER_JUMP_SPEED = 20
 
+
+GRAVITY = 1
+
+# Movement speed of player, in pixels per frame
+#Pixels per frame
+PLAYER_WALK_SPEED = 8
+PLAYER_JUMP_SPEED = 15
+PLAYER_COMBO_JUMP_BOOST = 4
+PLAYER_COMBO_JUMP_TIMER = 7
+PLAYER_MAX_JUMP_COMBO = 2
+JUMP_DIFFICULTY = 2
+
+# Pixels per frame per frame
+PLAYER_WALK_ACCELERATION = 1
+PLAYER_SLOW_DOWN = 1
 
 class MyGame(arcade.Window):
     """
@@ -56,6 +72,12 @@ class MyGame(arcade.Window):
         self.collect_coin_sound = arcade.load_sound(":resources:sounds/coin1.wav")
         self.jump_sound = arcade.load_sound(":resources:sounds/jump1.wav")
 
+        # Variables for control buttons
+        self.left_pressed = False
+        self.right_pressed = False
+        self.up_pressed = False
+        self.down_pressed = False
+
         arcade.set_background_color(arcade.csscolor.CORNFLOWER_BLUE)
 
     def setup(self):
@@ -66,7 +88,7 @@ class MyGame(arcade.Window):
         self.gui_camera = arcade.Camera(self.width, self.height)
 
         # Name of map file to load
-        map_name = "E:/Documents/GitHub/SKAP-platformer/skap_plattformer/assets/tiles/map.tmx"
+        map_name = "E:/Documents/GitHub/SKAP-platformer/skap_plattformer/assets/platform_level_01.tmx"
 
         # Layer specific options are defined based on Layer names in a dictionary
         # Doing this will make the SpriteList for the platforms layer
@@ -88,10 +110,13 @@ class MyGame(arcade.Window):
         self.score = 0
 
         # Set up the player, specifically placing it at these coordinates.
-        image_source = ":resources:images/animated_characters/female_adventurer/femaleAdventurer_idle.png"
+        image_source = path("assets/images/skapning-export.png")
         self.player_sprite = arcade.Sprite(image_source, CHARACTER_SCALING)
         self.player_sprite.center_x = 128
         self.player_sprite.center_y = 128
+        self.player_sprite.newJump = True
+        self.player_sprite.combo_jump_timer = 0
+        self.player_sprite.combo_jumps = 0
         self.scene.add_sprite("Player", self.player_sprite)
 
         # --- Other stuff
@@ -101,8 +126,80 @@ class MyGame(arcade.Window):
 
         # Create the 'physics engine'
         self.physics_engine = arcade.PhysicsEnginePlatformer(
-            self.player_sprite, gravity_constant=GRAVITY, walls=self.scene["Platforms"]
+            self.player_sprite, gravity_constant=GRAVITY, walls=self.scene["Ground"]
         )
+
+    
+    def player_move(self):
+
+        #Jump mechanics
+        if self.physics_engine.can_jump():
+
+            #Decrement combo timer while you're on the ground
+            self.player_sprite.combo_jump_timer -= 1
+            
+            if self.player_sprite.newJump:
+                if self.up_pressed and not self.down_pressed:
+                    """
+                    Jump mechanics:
+                    If JUMP_DIFFICULTY is 0, you can constantly jump by holding its key
+
+                    If its 1 You have to let go and repress, to jump the moment you touch ground
+
+                    If its 2 you have to let go and repress WHILE you're on ground, to jump.
+                    """
+
+                    if self.physics_engine.can_jump():
+                        if JUMP_DIFFICULTY == 1:
+                            self.player_sprite.newJump = False
+
+                        if self.player_sprite.combo_jump_timer > 0:
+                            self.physics_engine.jump(PLAYER_JUMP_SPEED+PLAYER_COMBO_JUMP_BOOST*self.player_sprite.combo_jumps)
+                            arcade.play_sound(self.jump_sound)
+                        else:
+                            self.player_sprite.combo_jumps = 0
+                            self.physics_engine.jump(PLAYER_JUMP_SPEED)
+                            arcade.play_sound(self.jump_sound)
+
+                        self.player_sprite.combo_jumps += 1
+                        if self.player_sprite.combo_jumps > PLAYER_MAX_JUMP_COMBO:
+                            self.player_sprite.combo_jumps = PLAYER_MAX_JUMP_COMBO
+
+                        self.player_sprite.combo_jump_timer = PLAYER_COMBO_JUMP_TIMER
+
+        if not self.up_pressed:
+            self.player_sprite.newJump = True
+        
+        elif JUMP_DIFFICULTY == 2: #only gets checked if self.up_pressed is true
+            self.player_sprite.newJump = False
+
+        #Walking mechanics
+        if self.left_pressed and not self.right_pressed:
+            if self.player_sprite.change_x != -PLAYER_WALK_SPEED:
+                if self.player_sprite.change_x > -PLAYER_WALK_SPEED+PLAYER_WALK_ACCELERATION:
+                    self.player_sprite.change_x -= PLAYER_WALK_ACCELERATION
+                else:
+                    self.player_sprite.change_x = -PLAYER_WALK_SPEED
+
+
+        elif self.right_pressed and not self.left_pressed:
+            if self.player_sprite.change_x != PLAYER_WALK_SPEED:
+                if self.player_sprite.change_x < PLAYER_WALK_SPEED-PLAYER_WALK_ACCELERATION:
+                    self.player_sprite.change_x += 2
+                else:
+                    self.player_sprite.change_x = PLAYER_WALK_SPEED
+
+        if not self.right_pressed and not self.left_pressed or self.right_pressed and self.left_pressed: 
+            if self.player_sprite.change_x != 0:
+                if self.player_sprite.change_x > 0:
+                    self.player_sprite.change_x -= PLAYER_SLOW_DOWN
+                    if self.player_sprite.change_x < 0: 
+                        self.player_sprite.change_x = 0
+                else:
+                    self.player_sprite.change_x += PLAYER_SLOW_DOWN
+                    if self.player_sprite.change_x > 0: 
+                        self.player_sprite.change_x = 0
+
 
     def on_draw(self):
         """Render the screen."""
@@ -115,6 +212,7 @@ class MyGame(arcade.Window):
 
         # Draw our Scene
         self.scene.draw()
+        #self.scene.draw_hit_boxes()
 
         # Activate the GUI camera before drawing GUI elements
         self.gui_camera.use()
@@ -130,24 +228,30 @@ class MyGame(arcade.Window):
         )
 
     def on_key_press(self, key, modifiers):
-        """Called whenever a key is pressed."""
-
+        #Called when a key is pressed 
+        
         if key == arcade.key.UP or key == arcade.key.W:
-            if self.physics_engine.can_jump():
-                self.player_sprite.change_y = PLAYER_JUMP_SPEED
-                arcade.play_sound(self.jump_sound)
-        elif key == arcade.key.LEFT or key == arcade.key.A:
-            self.player_sprite.change_x = -PLAYER_MOVEMENT_SPEED
-        elif key == arcade.key.RIGHT or key == arcade.key.D:
-            self.player_sprite.change_x = PLAYER_MOVEMENT_SPEED
+            self.up_pressed = True
+        if key == arcade.key.LEFT or key == arcade.key.A:
+            self.left_pressed = True
+        if key == arcade.key.DOWN or key == arcade.key.S:
+            self.down_pressed = True
+        if key == arcade.key.RIGHT or key == arcade.key.D:
+            self.right_pressed = True
+        if key == arcade.key.ESCAPE:
+            self.setup()
 
     def on_key_release(self, key, modifiers):
-        """Called when the user releases a key."""
+        #Called when a key is released
 
+        if key == arcade.key.UP or key == arcade.key.W:
+            self.up_pressed = False
         if key == arcade.key.LEFT or key == arcade.key.A:
-            self.player_sprite.change_x = 0
-        elif key == arcade.key.RIGHT or key == arcade.key.D:
-            self.player_sprite.change_x = 0
+            self.left_pressed = False
+        if key == arcade.key.DOWN or key == arcade.key.S:
+            self.down_pressed = False
+        if key == arcade.key.RIGHT or key == arcade.key.D:
+            self.right_pressed = False
 
     def center_camera_to_player(self):
         screen_center_x = self.player_sprite.center_x - (self.camera.viewport_width / 2)
@@ -166,6 +270,7 @@ class MyGame(arcade.Window):
         """Movement and game logic"""
 
         # Move the player with the physics engine
+        self.player_move()
         self.physics_engine.update()
 
         # See if we hit any coins

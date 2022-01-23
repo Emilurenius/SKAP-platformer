@@ -4,17 +4,20 @@
 import arcade
 import os
 
-from arcade.key import F
 
 #More convenient way to find files
 def path(path):
     return os.path.realpath(f"{__file__}/../../{path}")
 
 # Initialize constant variables
-SCREEN_WIDTH = 1000
-SCREEN_HEIGHT = 800
+SCREEN_WIDTH = 1800
+SCREEN_HEIGHT = 880
 SCREEN_TITLE = "Skap plattformer"
 GRAVITY = 1
+
+# Player start position
+PLAYER_START_Y = 100
+PLAYER_START_X = 100
 
 #Pixels per frame
 PLAYER_WALK_SPEED = 8
@@ -27,18 +30,36 @@ PLAYER_MAX_JUMP_COMBO = 2
 PLAYER_WALK_ACCELERATION = 1
 PLAYER_SLOW_DOWN = 1
 
-
 JUMP_DIFFICULTY = 1
+
+# Placement of GUI
+# Scoreboard
+SCORE_FROM_TOP = 25
+SCORE_FROM_LEFT = 10
+
+# Timer
+TIMER_FROM_TOP = 25
+TIMER_FROM_RIGHT = 80
 
 
 # sprite scaling
 CHARACTER_SCALING = 1
-TILE_SCALING = 1
+TILE_SCALING = 0.5
 COIN_SCALING = 0.5
+SPRITE_PIXEL_SIZE = 256
+GRID_PIXEL_SIZE = SPRITE_PIXEL_SIZE * TILE_SCALING
 
 # Constants for colors
 BLUE = arcade.csscolor.CORNFLOWER_BLUE
 WHITE = arcade.csscolor.WHITE
+
+# Layer names for from tilemap
+LAYER_NAME_PLATFORMS = "Platforms"
+LAYER_NAME_COINS = "Coins"
+LAYER_NAME_FOREGROUND = "Foreground"
+LAYER_NAME_BACKGROUND = "Background"
+LAYER_NAME_DANGER = "Danger"
+
 
 
 class MyGame(arcade.Window):
@@ -48,91 +69,64 @@ class MyGame(arcade.Window):
 
         # Call the parent class and set up the window
         super().__init__(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
+        
+        # Initialize tile map
+        self.tile_map = None
+        self.end_of_map = 0
 
+        # Level
+        self.level = 1
+        
         # Scene object
         self.scene = None
+
+        # separate variable for the player sprite
+        self.player_sprite = None
+
+        # Physics engine
+        self.physics_engine = None
 
         # Camera objects
         self.player_camera = None
         self.GUI_camera = None
 
-        # separate variable for the player sprite
-        self.player_sprite = None
-
-        # Physics physics engine
-        self.physics_engine = None
-        
-        # Timer
-        self.total_time = 0.0
-
         # Score
         self.score = 0
 
+        # Timer
+        self.total_time = 0.0
+        
+        # Load sounds
+        self.collect_coin_sound = arcade.load_sound(":resources:sounds/coin1.wav")
+        self.jump_sound = arcade.load_sound(":resources:sounds/phaseJump1.wav")
+        self.big_jump_sound = arcade.load_sound(":resources:sounds/jump3.wav")
+        self.land_sound = arcade.load_sound(":resources:sounds/rockHit2.ogg")
+
+        
+        # Set background color
+        arcade.set_background_color(BLUE)
+        
         # Variables for control buttons
         self.left_pressed = False
         self.right_pressed = False
         self.up_pressed = False
         self.down_pressed = False
 
-        # Set background color
-        arcade.set_background_color(BLUE)
-
-        # Load sounds
-        self.collect_coin_sound = arcade.load_sound(":resources:sounds/coin1.wav")
-        self.jump_sound = arcade.load_sound(":resources:sounds/jump1.wav")
-
-        # Initialize tile map
-        self.tile_map = None
-
     def setup(self):
         # Game setup happens here, and calling this function should restart the game
         
-        # Initialize scene
-        self.scene = arcade.Scene()
-
-        # Create spritelists
-        self.scene.add_sprite_list("Player")
-        self.scene.add_sprite_list("Walls", use_spatial_hash = True)  # spatial hash makes collision detection faster at the cost of slower moving.
-        self.scene.add_sprite_list("Coins", use_spatial_hash = True)
-        self.collisionLists = "Walls"
-        self.scene.add_sprite_list("Collision")
-
-        # Set up player
-        player_image = path("assets/images/skapning-export.png")
-        self.player_sprite = arcade.Sprite(player_image, CHARACTER_SCALING)
-        self.player_sprite.newJump = True
-        self.player_sprite.combo_jump_timer = 0
-        self.player_sprite.combo_jumps = 0
-        self.score = 0
-        
-        # Place the player
-        self.player_sprite.center_x = 96
-        self.player_sprite.center_y = 128
-        
-        # Add the player to the spritelist
-        self.scene.add_sprite("Player", self.player_sprite)
-
         # Create the Camera
         self.player_camera = arcade.Camera(self.width, self.height)
         self.GUI_camera = arcade.Camera(self.width, self.height)
 
-        # Template for adding things to the level
-        # CORRECTLIST should be wall if its stationary
-        """
-        objectName = arcade.Sprite(imageFile.png, ScalingFactor)
-        objectName.center_x = horizontal coordinate
-        objectName.center_y = vertical coordinate
-        self.scene.add_sprite("CORRECTLIST", objectName)
-        """
-
-        # Name of map file to load
-        map_name = path("assets/tiles/map.tmx")
+        #Name of map file to load
+        map_name = path("assets/platform_level_01.tmx")
 
         # Layer specific options are defined based on Layer names in a dictionary
         # Doing this will make the SpriteList for the platforms layer
         # use spatial hashing for detection.
         layer_options = {
-            "Walls": {
+            "Ground": {
                 "use_spatial_hash": True,
             },
         }
@@ -143,48 +137,30 @@ class MyGame(arcade.Window):
         # Initialize Scene with our TileMap, this will automatically add all layers
         # from the map as SpriteLists in the scene in the proper order.
         self.scene = arcade.Scene.from_tilemap(self.tile_map)
+        self.end_of_map = self.tile_map.width * GRID_PIXEL_SIZE
 
-        # # Create the ground
-        # # This shows using a loop to place multiple sprites horizontally
-        # for x in range(0, 2500, 64):
-        #     wall = arcade.Sprite(":resources:images/tiles/grassMid.png", TILE_SCALING)
-        #     wall.center_x = x
-        #     wall.center_y = 32
-        #     self.scene.add_sprite("Walls", wall)
+        self.score = 0
 
-        # for y in range(0, 1250, 64):
-        #     wall = arcade.Sprite(":resources:images/tiles/stoneCenter.png", TILE_SCALING)
-        #     wall.center_y = y
-        #     wall.center_x = 32
-        #     self.scene.add_sprite("Walls", wall)
-
-        # # Put some crates on the ground
-        # # This shows using a coordinate list to place sprites
-        # coordinate_list = [[512, 96], [256, 96], [768, 96]]
-
-        # for coordinate in coordinate_list:
-        #     # Add a crate on the ground
-        #     wall = arcade.Sprite(
-        #         ":resources:images/tiles/boxCrate_double.png", TILE_SCALING
-        #     )
-        #     wall.position = coordinate
-        #     self.scene.add_sprite("Walls", wall)
+        # Set up player
+        image_source = path("assets/images/skapning-export.png")
+        self.player_sprite = arcade.Sprite(image_source, CHARACTER_SCALING)
+        self.player_sprite.newJump = True
+        self.player_sprite.combo_jump_timer = 0
+        self.player_sprite.combo_jumps = 0
+        self.player_sprite.inAir = False
         
-        # # Add some coins
-        # for x in range(128, 1250, 256):
-        #     coin = arcade.Sprite(":resources:images/items/coinGold.png", COIN_SCALING)
-        #     coin.center_x = x
-        #     coin.center_y = 96
-        #     self.scene.add_sprite("Coins", coin)
+        
 
-        # coin = arcade.Sprite(":resources:images/items/coinGold.png", COIN_SCALING)
-        # coin.center_x = -128
-        # coin.center_y = 32
-        # self.scene.add_sprite("Coins", coin)
+        # Place the player
+        self.player_sprite.center_x = PLAYER_START_X
+        self.player_sprite.center_y = PLAYER_START_Y
+        
+        # Add the player to the spritelist
+        self.scene.add_sprite("Player", self.player_sprite)
 
         # Create physics engine
         self.physics_engine = arcade.PhysicsEnginePlatformer(
-            player_sprite = self.player_sprite, gravity_constant = GRAVITY, walls = self.scene["Walls"]
+            player_sprite = self.player_sprite, gravity_constant = GRAVITY, walls = self.scene["Ground"]
         )
 
         # Clock
@@ -199,15 +175,15 @@ class MyGame(arcade.Window):
 
         # draw sprites
         self.scene.draw()
-
+        #self.scene.draw_hit_boxes()
         # Draw GUI
         self.GUI_camera.use()
 
         # Draw the score counter
         arcade.draw_text (
             self.score_text,
-            10,
-            SCREEN_HEIGHT - 50,
+            SCORE_FROM_LEFT,
+            SCREEN_HEIGHT - SCORE_FROM_TOP,
             WHITE,
             18
         )
@@ -215,8 +191,8 @@ class MyGame(arcade.Window):
         # Draw the timer
         arcade.draw_text (
             self.clock_text,
-            SCREEN_WIDTH - 100,
-            SCREEN_HEIGHT - 50,
+            SCREEN_WIDTH - TIMER_FROM_RIGHT,
+            SCREEN_HEIGHT - TIMER_FROM_TOP,
             WHITE,
             18
         )
@@ -225,6 +201,8 @@ class MyGame(arcade.Window):
 
         #Jump mechanics
         if self.physics_engine.can_jump():
+            
+            self.player_sprite.inAir = False
 
             #Decrement combo timer while you're on the ground
             self.player_sprite.combo_jump_timer -= 1
@@ -246,7 +224,10 @@ class MyGame(arcade.Window):
 
                         if self.player_sprite.combo_jump_timer > 0:
                             self.physics_engine.jump(PLAYER_JUMP_SPEED+PLAYER_COMBO_JUMP_BOOST*self.player_sprite.combo_jumps)
-                            arcade.play_sound(self.jump_sound)
+                            if self.player_sprite.combo_jumps < 2:
+                                arcade.play_sound(self.jump_sound)
+                            else:
+                                arcade.play_sound(self.big_jump_sound)
                         else:
                             self.player_sprite.combo_jumps = 0
                             self.physics_engine.jump(PLAYER_JUMP_SPEED)
@@ -254,10 +235,13 @@ class MyGame(arcade.Window):
 
                         self.player_sprite.combo_jumps += 1
                         if self.player_sprite.combo_jumps > PLAYER_MAX_JUMP_COMBO:
-                            self.player_sprite.combo_jumps = PLAYER_MAX_JUMP_COMBO
+                            self.player_sprite.combo_jumps = 0
 
                         self.player_sprite.combo_jump_timer = PLAYER_COMBO_JUMP_TIMER
 
+
+        else:
+            self.player_sprite.inAir = True
         if not self.up_pressed:
             self.player_sprite.newJump = True
         
@@ -294,16 +278,30 @@ class MyGame(arcade.Window):
     def on_update(self, delta_time):
         #This should be called 60 times per second
 
-        #Handle picking up coins
-        if True:
-            coin_hit_list = arcade.check_for_collision_with_list(self.player_sprite, self.scene["Coins"])
-            for coin in coin_hit_list:
-                # Remove the coin, play a sound, increase score by 1.
-                coin.remove_from_sprite_lists()
-                arcade.play_sound(self.collect_coin_sound)
-                self.score += 1
+        self.player_move()     
+        self.physics_engine.update()
+        
+        # Check if player fell off the map
+        if self.player_sprite.center_y < -100:
+            self.player_sprite.center_y = PLAYER_START_Y
+            self.player_sprite.center_x = PLAYER_START_X
 
-        self.score_text = f"Score: {self.score}, there are {self.scene['Coins'].index(self.scene['Coins'][-1])} remaining"
+
+        # See if we hit any coins
+        coin_hit_list = arcade.check_for_collision_with_list(
+            self.player_sprite, self.scene["Coins"]
+        )
+
+        # Loop through each coin we hit (if any) and remove it
+        for coin in coin_hit_list:
+            # Remove the coin
+            coin.remove_from_sprite_lists()
+            # Play a sound
+            arcade.play_sound(self.collect_coin_sound)
+            # Add one to the score
+            self.score += 1
+
+        self.score_text = f"Score: {self.score}, there are some remaining"
         
         #Keep track of time
         self.total_time += delta_time
@@ -311,12 +309,7 @@ class MyGame(arcade.Window):
         seconds = int(self.total_time)%60
         milliseconds = int((self.total_time-seconds)*100)
         self.clock_text = f"{minutes}:{seconds}:{milliseconds}"
-        
-        
-        
-        
-        self.player_move()     
-        self.physics_engine.update()
+
         self.center_camera_on_player()
 
     def on_key_press(self, key, modifiers):

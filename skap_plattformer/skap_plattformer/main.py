@@ -163,7 +163,7 @@ class MyGame(arcade.Window):
 
         # Create physics engine
         self.physics_engine = arcade.PhysicsEnginePlatformer(
-            player_sprite = self.player_sprite, gravity_constant = 0, walls = [self.scene["Ground"], self.scene["Ice"]]
+            player_sprite = self.player_sprite, gravity_constant = GRAVITY, walls = [self.scene["Ground"], self.scene["Ice"]]
         )
 
         # Clock

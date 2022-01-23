@@ -151,7 +151,12 @@
  </layer>
  <layer id="2" name="Ground" width="25" height="20">
   <data encoding="base64" compression="zlib">
-   eJxjYBgFo2AUjALCgBuIeYCYd6AdMgSBABALDbQjhgDgGiB7BYnEJkBsBKVB2BiKkdVoIGFkcSYqYnUkjCwOAJCqA64=
+   eJxjYBgFo2AUjALCgBuIeYCYd6AdMgSBABALDbQjhgDgGiB7BYnEJkBsBKVB2BiKidHLRAcMAGemAvo=
+  </data>
+ </layer>
+ <layer id="3" name="Ladder" width="25" height="20">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFo2AUjIJRoEgHOxRG7RhxdtATAABiIwDC
   </data>
  </layer>
  <objectgroup id="10" name="DecorationBehindPlayer">
@@ -162,11 +167,6 @@
  <objectgroup id="11" name="DecorationInFrontPlayer">
   <object id="28" gid="34" x="420" y="2304.67" width="128" height="128"/>
  </objectgroup>
- <layer id="3" name="Ladder" width="25" height="20">
-  <data encoding="base64" compression="zlib">
-   eJxjYBgFo2AUjIJRMApGwVAHAAfQAAE=
-  </data>
- </layer>
  <objectgroup id="5" name="Coins">
   <object id="3" gid="23" x="768" y="2048" width="128" height="128">
    <properties>
@@ -193,7 +193,10 @@
   <object id="11" gid="24" x="1714.79" y="1564" width="128" height="128"/>
   <object id="12" gid="24" x="2129.94" y="1600.36" width="128" height="128"/>
   <object id="13" gid="25" x="1866.3" y="1206.42" width="128" height="128"/>
-  <object id="16" gid="24" x="896" y="1792" width="128" height="128"/>
+  <object id="16" gid="24" x="896" y="1792" width="128" height="128">
+   <properties>
+    <property name="coin_value" type="int" value="100"/>
+   </properties>
+  </object>
  </objectgroup>
- <objectgroup id="12" name="Interactables"/>
 </map>

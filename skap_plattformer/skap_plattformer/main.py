@@ -27,8 +27,8 @@ PLAYER_COMBO_JUMP_TIMER = 7
 PLAYER_MAX_JUMP_COMBO = 2
 
 # Pixels per frame per frame
-PLAYER_WALK_ACCELERATION = 1
-PLAYER_SLOW_DOWN = 1
+PLAYER_WALK_ACCELERATION = 0.1
+PLAYER_SLOW_DOWN = 0.1
 
 JUMP_DIFFICULTY = 1
 
@@ -260,7 +260,7 @@ class MyGame(arcade.Window):
         elif self.right_pressed and not self.left_pressed:
             if self.player_sprite.change_x != PLAYER_WALK_SPEED:
                 if self.player_sprite.change_x < PLAYER_WALK_SPEED-PLAYER_WALK_ACCELERATION:
-                    self.player_sprite.change_x += 2
+                    self.player_sprite.change_x += PLAYER_WALK_ACCELERATION
                 else:
                     self.player_sprite.change_x = PLAYER_WALK_SPEED
 

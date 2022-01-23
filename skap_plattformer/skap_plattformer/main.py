@@ -138,14 +138,20 @@ class MyGame(arcade.Window):
         self.scene = arcade.Scene.from_tilemap(self.tile_map)
         self.end_of_map = self.tile_map.width * GRID_PIXEL_SIZE
 
-        self.ground_list.append(self.scene["Ground"])
-        self.ground_list.append(self.scene["Ice"])
+        self.scene.add_sprite_list('ground_list')
+        for sprite in self.scene['Ground']:
+            self.scene['ground_list'].append(sprite)
+        for sprite in self.scene['Ice']:
+            self.scene['ground_list'].append(sprite)
+            
+        for sprite in self.scene['ground_list']:
+            print(sprite)
 
         self.score = 0
 
         # Set up player
         image_source = path("assets/images/skapning-export.png")
-        self.player = arcade.Sprite(image_source, CHARACTER_SCALING)
+        self.player = arcade.Sprite(image_source, CHARACTER_SCALING, hit_box_algorithm='Detailed')
         self.player.newJump = True
         self.player.combo_jump_timer = 0
         self.player.combo_jumps = 0
@@ -178,7 +184,7 @@ class MyGame(arcade.Window):
 
         # draw sprites
         self.scene.draw()
-        #self.scene.draw_hit_boxes()
+        self.scene.draw_hit_boxes()
         # Draw GUI
         self.GUI_camera.use()
 
@@ -206,7 +212,7 @@ class MyGame(arcade.Window):
         self.player.on_ground = self.physics_engine.can_jump()
         # endregion
 
-        # region Gravity
+        # Gravity
         if not self.player.on_ground:
             self.player.change_y -= GRAVITY
 
@@ -257,6 +263,7 @@ class MyGame(arcade.Window):
         # endregion
 
         # region Walking mechanics
+        # Walk Left
         if self.left_pressed and not self.right_pressed:
             if self.player.change_x != -PLAYER_WALK_SPEED:
                 if self.player.change_x > -PLAYER_WALK_SPEED+PLAYER_WALK_ACCELERATION:
@@ -264,6 +271,7 @@ class MyGame(arcade.Window):
                 else:
                     self.player.change_x = -PLAYER_WALK_SPEED
 
+        # Walk Right
         elif self.right_pressed and not self.left_pressed:
             if self.player.change_x != PLAYER_WALK_SPEED:
                 if self.player.change_x < PLAYER_WALK_SPEED-PLAYER_WALK_ACCELERATION:
@@ -271,22 +279,32 @@ class MyGame(arcade.Window):
                 else:
                     self.player.change_x = PLAYER_WALK_SPEED
 
-        if not self.right_pressed and not self.left_pressed or self.right_pressed and self.left_pressed: 
+        # No walk
+        if not self.right_pressed and not self.left_pressed or self.right_pressed and self.left_pressed:
+            friction = 1
+            if self.player.on_ground:
+                ground = arcade.get_sprites_at_point(
+                    [self.player.center_x, self.player.bottom-5], # Point to check
+                    self.scene['ground_list'] # Sprites to check for
+                )
+                
+                if ground:
+                    print(ground[0].properties)
+                
             if self.player.change_x != 0:
                 if self.player.change_x > 0:
-                    self.player.change_x -= PLAYER_SLOW_DOWN
+                    self.player.change_x -= friction
                     if self.player.change_x < 0: 
                         self.player.change_x = 0
                 else:
-                    self.player.change_x += PLAYER_SLOW_DOWN
+                    self.player.change_x += friction
                     if self.player.change_x > 0: 
                         self.player.change_x = 0
         # endregion
 
     def on_update(self, delta_time):
         #This should be called 60 times per second
-
-             
+        
         self.physics_engine.update()
         
         # Check if player fell off the map

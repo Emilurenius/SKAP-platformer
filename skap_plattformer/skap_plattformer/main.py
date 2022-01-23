@@ -223,11 +223,12 @@ class MyGame(arcade.Window):
                             self.player_sprite.newJump = False
 
                         if self.player_sprite.combo_jump_timer > 0:
-                            self.physics_engine.jump(PLAYER_JUMP_SPEED+PLAYER_COMBO_JUMP_BOOST*self.player_sprite.combo_jumps)
                             if self.player_sprite.combo_jumps < 2:
+                                self.physics_engine.jump(PLAYER_JUMP_SPEED+PLAYER_COMBO_JUMP_BOOST*self.player_sprite.combo_jumps)
                                 arcade.play_sound(self.jump_sound)
                             else:
                                 arcade.play_sound(self.big_jump_sound)
+                                self.physics_engine.jump(PLAYER_JUMP_SPEED+PLAYER_COMBO_JUMP_BOOST*self.player_sprite.combo_jumps+5)
                         else:
                             self.player_sprite.combo_jumps = 0
                             self.physics_engine.jump(PLAYER_JUMP_SPEED)
@@ -235,7 +236,7 @@ class MyGame(arcade.Window):
 
                         self.player_sprite.combo_jumps += 1
                         if self.player_sprite.combo_jumps > PLAYER_MAX_JUMP_COMBO:
-                            self.player_sprite.combo_jumps = 0
+                            self.player_sprite.combo_jumps = PLAYER_MAX_JUMP_COMBO
 
                         self.player_sprite.combo_jump_timer = PLAYER_COMBO_JUMP_TIMER
 

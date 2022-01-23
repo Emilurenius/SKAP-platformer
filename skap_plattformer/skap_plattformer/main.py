@@ -163,7 +163,7 @@ class MyGame(arcade.Window):
 
         # Create physics engine
         self.physics_engine = arcade.PhysicsEnginePlatformer(
-            player_sprite = self.player_sprite, gravity_constant = GRAVITY, walls = [self.scene["Ground"], self.scene["Ice"]]
+            player_sprite = self.player_sprite, gravity_constant = 0, walls = [self.scene["Ground"], self.scene["Ice"]]
         )
 
         # Clock
@@ -208,6 +208,9 @@ class MyGame(arcade.Window):
         #     [self.player_sprite.bottom],
         # ))
 
+        # region Gravity
+        if not self.physics_engine.can_jump():
+            self.player_sprite.change_y -= GRAVITY
 
         # region Jump mechanics
         if self.physics_engine.can_jump():

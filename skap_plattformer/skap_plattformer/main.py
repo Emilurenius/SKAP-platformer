@@ -149,7 +149,7 @@ class MyGame(arcade.Window):
 
         self.score = 0
 
-        # Set up player
+        # region Set up player
         image_source = path("assets/images/skapning-export.png")
         self.player = arcade.Sprite(image_source, CHARACTER_SCALING, hit_box_algorithm='Detailed')
         self.player.newJump = True
@@ -158,14 +158,13 @@ class MyGame(arcade.Window):
         self.player.onLadder = False
         self.player.onGround = False
         
-        
-
         # Place the player
         self.player.center_x = PLAYER_START_X
         self.player.center_y = PLAYER_START_Y
         
         # Add the player to the spritelist
         self.scene.add_sprite("Player", self.player)
+        # endregion
 
         # Create physics engine
         self.physics_engine = arcade.PhysicsEnginePlatformer(

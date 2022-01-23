@@ -105,7 +105,7 @@ class MyGame(arcade.Window):
         arcade.set_background_color(BLUE)
 
         # variables relating to the player
-        self.player_sprite = None
+        self.player = None
         self.left_pressed = False
         self.right_pressed = False
         self.up_pressed = False
@@ -145,25 +145,25 @@ class MyGame(arcade.Window):
 
         # Set up player
         image_source = path("assets/images/skapning-export.png")
-        self.player_sprite = arcade.Sprite(image_source, CHARACTER_SCALING)
-        self.player_sprite.newJump = True
-        self.player_sprite.combo_jump_timer = 0
-        self.player_sprite.combo_jumps = 0
-        self.player_sprite.inAir = False
-        self.player_sprite.onLadder = False
+        self.player = arcade.Sprite(image_source, CHARACTER_SCALING)
+        self.player.newJump = True
+        self.player.combo_jump_timer = 0
+        self.player.combo_jumps = 0
+        self.player.onLadder = False
+        self.player.onGround = False
         
         
 
         # Place the player
-        self.player_sprite.center_x = PLAYER_START_X
-        self.player_sprite.center_y = PLAYER_START_Y
+        self.player.center_x = PLAYER_START_X
+        self.player.center_y = PLAYER_START_Y
         
         # Add the player to the spritelist
-        self.scene.add_sprite("Player", self.player_sprite)
+        self.scene.add_sprite("Player", self.player)
 
         # Create physics engine
         self.physics_engine = arcade.PhysicsEnginePlatformer(
-            player_sprite = self.player_sprite, gravity_constant = 0, walls = [self.scene["Ground"], self.scene["Ice"]]
+            player_sprite = self.player, gravity_constant = 0, walls = [self.scene["Ground"], self.scene["Ice"]]
         )
 
         # Clock
@@ -203,24 +203,20 @@ class MyGame(arcade.Window):
     def player_move(self):
         
         # region Useful variables for movement
-        # ground = []
-        # ground.append(arcade.get_sprites_at_point(
-        #     [self.player_sprite.bottom],
-        # ))
+        self.player.on_ground = self.physics_engine.can_jump()
+        # endregion
 
         # region Gravity
-        if not self.physics_engine.can_jump():
-            self.player_sprite.change_y -= GRAVITY
+        if not self.player.on_ground:
+            self.player.change_y -= GRAVITY
 
         # region Jump mechanics
-        if self.physics_engine.can_jump():
-            
-            self.player_sprite.inAir = False
+        if self.player.on_ground:
 
             #Decrement combo timer while you're on the ground
-            self.player_sprite.combo_jump_timer -= 1
+            self.player.combo_jump_timer -= 1
             
-            if self.player_sprite.newJump:
+            if self.player.newJump:
                 if self.up_pressed and not self.down_pressed:
                     """
                     Jump mechanics:
@@ -233,59 +229,58 @@ class MyGame(arcade.Window):
 
                     if self.physics_engine.can_jump():
                         if JUMP_DIFFICULTY == 1:
-                            self.player_sprite.newJump = False
+                            self.player.newJump = False
 
-                        if self.player_sprite.combo_jump_timer > 0:
-                            if self.player_sprite.combo_jumps < 2:
-                                self.physics_engine.jump(PLAYER_JUMP_SPEED+PLAYER_COMBO_JUMP_BOOST*self.player_sprite.combo_jumps)
+                        if self.player.combo_jump_timer > 0:
+                            if self.player.combo_jumps < 2:
+                                self.physics_engine.jump(PLAYER_JUMP_SPEED+PLAYER_COMBO_JUMP_BOOST*self.player.combo_jumps)
                                 arcade.play_sound(self.jump_sound)
                             else:
                                 arcade.play_sound(self.big_jump_sound)
-                                self.physics_engine.jump(PLAYER_JUMP_SPEED+PLAYER_COMBO_JUMP_BOOST*self.player_sprite.combo_jumps+5)
+                                self.physics_engine.jump(PLAYER_JUMP_SPEED+PLAYER_COMBO_JUMP_BOOST*self.player.combo_jumps+5)
                         else:
-                            self.player_sprite.combo_jumps = 0
+                            self.player.combo_jumps = 0
                             self.physics_engine.jump(PLAYER_JUMP_SPEED)
                             arcade.play_sound(self.jump_sound)
 
-                        self.player_sprite.combo_jumps += 1
-                        if self.player_sprite.combo_jumps > PLAYER_MAX_JUMP_COMBO:
-                            self.player_sprite.combo_jumps = PLAYER_MAX_JUMP_COMBO
+                        self.player.combo_jumps += 1
+                        if self.player.combo_jumps > PLAYER_MAX_JUMP_COMBO:
+                            self.player.combo_jumps = PLAYER_MAX_JUMP_COMBO
 
-                        self.player_sprite.combo_jump_timer = PLAYER_COMBO_JUMP_TIMER
-        else:
-            self.player_sprite.inAir = True
+                        self.player.combo_jump_timer = PLAYER_COMBO_JUMP_TIMER
+
         if not self.up_pressed:
-            self.player_sprite.newJump = True
+            self.player.newJump = True
         
         elif JUMP_DIFFICULTY == 2: #only gets checked if self.up_pressed is true
-            self.player_sprite.newJump = False
+            self.player.newJump = False
         # endregion
 
         # region Walking mechanics
         if self.left_pressed and not self.right_pressed:
-            if self.player_sprite.change_x != -PLAYER_WALK_SPEED:
-                if self.player_sprite.change_x > -PLAYER_WALK_SPEED+PLAYER_WALK_ACCELERATION:
-                    self.player_sprite.change_x -= PLAYER_WALK_ACCELERATION
+            if self.player.change_x != -PLAYER_WALK_SPEED:
+                if self.player.change_x > -PLAYER_WALK_SPEED+PLAYER_WALK_ACCELERATION:
+                    self.player.change_x -= PLAYER_WALK_ACCELERATION
                 else:
-                    self.player_sprite.change_x = -PLAYER_WALK_SPEED
+                    self.player.change_x = -PLAYER_WALK_SPEED
 
         elif self.right_pressed and not self.left_pressed:
-            if self.player_sprite.change_x != PLAYER_WALK_SPEED:
-                if self.player_sprite.change_x < PLAYER_WALK_SPEED-PLAYER_WALK_ACCELERATION:
-                    self.player_sprite.change_x += PLAYER_WALK_ACCELERATION
+            if self.player.change_x != PLAYER_WALK_SPEED:
+                if self.player.change_x < PLAYER_WALK_SPEED-PLAYER_WALK_ACCELERATION:
+                    self.player.change_x += PLAYER_WALK_ACCELERATION
                 else:
-                    self.player_sprite.change_x = PLAYER_WALK_SPEED
+                    self.player.change_x = PLAYER_WALK_SPEED
 
         if not self.right_pressed and not self.left_pressed or self.right_pressed and self.left_pressed: 
-            if self.player_sprite.change_x != 0:
-                if self.player_sprite.change_x > 0:
-                    self.player_sprite.change_x -= PLAYER_SLOW_DOWN
-                    if self.player_sprite.change_x < 0: 
-                        self.player_sprite.change_x = 0
+            if self.player.change_x != 0:
+                if self.player.change_x > 0:
+                    self.player.change_x -= PLAYER_SLOW_DOWN
+                    if self.player.change_x < 0: 
+                        self.player.change_x = 0
                 else:
-                    self.player_sprite.change_x += PLAYER_SLOW_DOWN
-                    if self.player_sprite.change_x > 0: 
-                        self.player_sprite.change_x = 0
+                    self.player.change_x += PLAYER_SLOW_DOWN
+                    if self.player.change_x > 0: 
+                        self.player.change_x = 0
         # endregion
 
     def on_update(self, delta_time):
@@ -295,16 +290,16 @@ class MyGame(arcade.Window):
         self.physics_engine.update()
         
         # Check if player fell off the map
-        if self.player_sprite.center_y < -100:
-            self.player_sprite.center_y = PLAYER_START_Y
-            self.player_sprite.center_x = PLAYER_START_X
+        if self.player.center_y < -100:
+            self.player.center_y = PLAYER_START_Y
+            self.player.center_x = PLAYER_START_X
 
 
         # region Check for misc collisions
         
         # Coins
         coin_hit_list = arcade.check_for_collision_with_list(
-            self.player_sprite, self.scene["Coins"]
+            self.player, self.scene["Coins"]
         )
 
         # Ladder
@@ -364,8 +359,8 @@ class MyGame(arcade.Window):
             self.right_pressed = False
         
     def center_camera_on_player(self):
-        screen_center_x = self.player_sprite.center_x - (self.player_camera.viewport_width / 2)
-        screen_center_y = self.player_sprite.center_y - (self.player_camera.viewport_height / 2)
+        screen_center_x = self.player.center_x - (self.player_camera.viewport_width / 2)
+        screen_center_y = self.player.center_y - (self.player_camera.viewport_height / 2)
 
         #Stop it from scrolling past 0
         if screen_center_x < 0:

@@ -27,8 +27,8 @@ PLAYER_COMBO_JUMP_TIMER = 7
 PLAYER_MAX_JUMP_COMBO = 2
 
 # Pixels per frame per frame
-PLAYER_WALK_ACCELERATION = 0.1
-PLAYER_SLOW_DOWN = 0.1
+PLAYER_WALK_ACCELERATION = 1
+PLAYER_SLOW_DOWN = 1
 
 JUMP_DIFFICULTY = 1
 
@@ -299,9 +299,9 @@ class MyGame(arcade.Window):
             # Play a sound
             arcade.play_sound(self.collect_coin_sound)
             # Add one to the score
-            self.score += 1
+            self.score += coin.properties["coin_value"]
 
-        self.score_text = f"Score: {self.score}, there are some remaining"
+        self.score_text = f"Score: {int(self.score)}, there are some remaining"
         
         #Keep track of time
         self.total_time += delta_time

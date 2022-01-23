@@ -73,6 +73,7 @@ class MyGame(arcade.Window):
         # Initialize tile map
         self.tile_map = None
         self.end_of_map = 0
+        self.ground_list = []
 
         # Level
         self.level = 1
@@ -137,6 +138,9 @@ class MyGame(arcade.Window):
         self.scene = arcade.Scene.from_tilemap(self.tile_map)
         self.end_of_map = self.tile_map.width * GRID_PIXEL_SIZE
 
+        self.ground_list.append(self.scene["Ground"])
+        self.ground_list.append(self.scene["Ice"])
+
         self.score = 0
 
         # Set up player
@@ -199,10 +203,10 @@ class MyGame(arcade.Window):
     def player_move(self):
         
         # region Useful variables for movement
-        ground = []
-        ground.append(arcade.get_sprites_at_point(
-            [self.player_sprite.bottom],
-        ))
+        # ground = []
+        # ground.append(arcade.get_sprites_at_point(
+        #     [self.player_sprite.bottom],
+        # ))
 
 
         # region Jump mechanics

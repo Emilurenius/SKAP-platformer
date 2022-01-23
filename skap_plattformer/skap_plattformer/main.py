@@ -73,7 +73,7 @@ class MyGame(arcade.Window):
         # Initialize tile map
         self.tile_map = None
         self.end_of_map = 0
-        self.ground_list = []
+        self.friction = 0
 
         # Level
         self.level = 1
@@ -138,15 +138,6 @@ class MyGame(arcade.Window):
         self.scene = arcade.Scene.from_tilemap(self.tile_map)
         self.end_of_map = self.tile_map.width * GRID_PIXEL_SIZE
 
-        self.scene.add_sprite_list('ground_list')
-        for sprite in self.scene['Ground']:
-            self.scene['ground_list'].append(sprite)
-        for sprite in self.scene['Ice']:
-            self.scene['ground_list'].append(sprite)
-            
-        for sprite in self.scene['ground_list']:
-            print(sprite)
-
         self.score = 0
 
         # region Set up player
@@ -170,6 +161,7 @@ class MyGame(arcade.Window):
         self.physics_engine = arcade.PhysicsEnginePlatformer(
             player_sprite = self.player, gravity_constant = 0, walls = [self.scene["Ground"], self.scene["Ice"]]
         )
+        self.friction = 1
 
         # Clock
         self.total_time = 0
@@ -214,6 +206,7 @@ class MyGame(arcade.Window):
         # Gravity
         if not self.player.on_ground:
             self.player.change_y -= GRAVITY
+            self.friction = 1
 
         # region Jump mechanics
         if self.player.on_ground:
@@ -280,23 +273,29 @@ class MyGame(arcade.Window):
 
         # No walk
         if not self.right_pressed and not self.left_pressed or self.right_pressed and self.left_pressed:
-            friction = 1
-            if self.player.on_ground:
-                ground = arcade.get_sprites_at_point(
-                    [self.player.center_x, self.player.bottom-5], # Point to check
-                    self.scene['ground_list'] # Sprites to check for
-                )
+            
+            ground_hit_list = arcade.get_sprites_at_point(
+                [self.player.center_x, self.player.bottom-5], self.scene["Ground"]
+            )
+
+            ice_hit_list = arcade.get_sprites_at_point(
+                [self.player.center_x, self.player.bottom-5], self.scene["Ice"]
+            )
+
+            if ground_hit_list:
+                self.friction = 1
                 
-                if ground:
-                    print(ground[0].properties)
-                
+            elif ice_hit_list:
+                print("ICE")
+                self.friction = 0.1
+
             if self.player.change_x != 0:
                 if self.player.change_x > 0:
-                    self.player.change_x -= friction
+                    self.player.change_x -= self.friction
                     if self.player.change_x < 0: 
                         self.player.change_x = 0
                 else:
-                    self.player.change_x += friction
+                    self.player.change_x += self.friction
                     if self.player.change_x > 0: 
                         self.player.change_x = 0
         # endregion

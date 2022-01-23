@@ -150,16 +150,13 @@
   </data>
  </layer>
  <layer id="2" name="Ground" width="25" height="20">
-  <properties>
-   <property name="friction" type="float" value="1"/>
-  </properties>
   <data encoding="base64" compression="zlib">
-   eJxjYBgFo2AUjALCgBuIeYCYd6AdMgSBABALDbQjhgDgGiB7BYnEJkBsBKVB2BiKidHLRAcMAGemAvo=
+   eJxjYBgFo2AUjALCgBuIeYCYd6AdMgSBABALDbQjhgDgGiB7BYnElOhnogMGALMbAcY=
   </data>
  </layer>
  <layer id="13" name="Ice" width="25" height="20">
   <data encoding="base64" compression="zlib">
-   eJxjYBgFo2AUjIJRMAoQQBCKR8HQAgBB/AAj
+   eJxjYBgFo2AUjIJRMAoQQBCKRwEqMMSBBwsAAO5AAUk=
   </data>
  </layer>
  <layer id="3" name="Ladder" width="25" height="20">

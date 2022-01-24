@@ -21,6 +21,7 @@ PLAYER_START_X = 100
 
 #Pixels per frame
 PLAYER_WALK_SPEED = 8
+PLAYER_CLIMB_SPEED = 4
 PLAYER_JUMP_SPEED = 15
 PLAYER_COMBO_JUMP_BOOST = 2
 PLAYER_COMBO_JUMP_TIMER = 7
@@ -39,7 +40,7 @@ SCORE_FROM_LEFT = 10
 
 # Timer
 TIMER_FROM_TOP = 25
-TIMER_FROM_RIGHT = 80
+TIMER_FROM_RIGHT = 41
 
 
 # sprite scaling
@@ -52,15 +53,6 @@ GRID_PIXEL_SIZE = SPRITE_PIXEL_SIZE * TILE_SCALING
 # Constants for colors
 BLUE = arcade.csscolor.CORNFLOWER_BLUE
 WHITE = arcade.csscolor.WHITE
-
-# Layer names for from tilemap
-LAYER_NAME_PLATFORMS = "Platforms"
-LAYER_NAME_COINS = "Coins"
-LAYER_NAME_FOREGROUND = "Foreground"
-LAYER_NAME_BACKGROUND = "Background"
-LAYER_NAME_DANGER = "Danger"
-
-
 
 class MyGame(arcade.Window):
     # Main application class.
@@ -93,6 +85,7 @@ class MyGame(arcade.Window):
 
         # Timer
         self.total_time = 0.0
+        self.real_timer_from_right = 60
         
         # Load sounds
         self.collect_coin_sound = arcade.load_sound(":resources:sounds/coin1.wav")
@@ -119,7 +112,7 @@ class MyGame(arcade.Window):
         self.GUI_camera = arcade.Camera(self.width, self.height)
 
         #Name of map file to load
-        map_name = path("assets/platform_level_01.tmx")
+        map_name = path("assets/levels/thing3.tmx")
 
         # Layer specific options are defined based on Layer names in a dictionary
         # Doing this will make the SpriteList for the platforms layer
@@ -142,12 +135,12 @@ class MyGame(arcade.Window):
 
         # region Set up player
         image_source = path("assets/images/skapning-export.png")
-        self.player = arcade.Sprite(image_source, CHARACTER_SCALING, hit_box_algorithm='Detailed')
+        self.player = arcade.Sprite(image_source, CHARACTER_SCALING, hit_box_algorithm='Simple')
         self.player.newJump = True
         self.player.combo_jump_timer = 0
         self.player.combo_jumps = 0
-        self.player.onLadder = False
-        self.player.onGround = False
+        self.player.on_ladder = False
+        self.player.on_ground = False
         
         # Place the player
         self.player.center_x = PLAYER_START_X
@@ -191,6 +184,14 @@ class MyGame(arcade.Window):
         # Draw the timer
         arcade.draw_text (
             self.clock_text,
+            SCREEN_WIDTH - self.real_timer_from_right,
+            SCREEN_HEIGHT - TIMER_FROM_TOP,
+            WHITE,
+            18
+        )
+
+        arcade.draw_text (
+            f":{self.milliseconds}",
             SCREEN_WIDTH - TIMER_FROM_RIGHT,
             SCREEN_HEIGHT - TIMER_FROM_TOP,
             WHITE,
@@ -205,11 +206,22 @@ class MyGame(arcade.Window):
 
         # Gravity
         if not self.player.on_ground:
-            self.player.change_y -= GRAVITY
-            self.friction = 1
+            if self.player.on_ladder:
+                if self.player.change_y != 0:
+                    if self.player.change_y > 0:
+                        self.player.change_y -= 2
+                        if self.player.change_y < 0: 
+                            self.player.change_y = 0
+                    else:
+                        self.player.change_y += 2
+                        if self.player.change_y > 0: 
+                            self.player.change_y = 0
+            else:
+                self.player.change_y -= GRAVITY
+                self.friction = 1
 
         # region Jump mechanics
-        if self.player.on_ground:
+        if self.player.on_ground and not self.player.on_ladder:
 
             #Decrement combo timer while you're on the ground
             self.player.combo_jump_timer -= 1
@@ -246,7 +258,15 @@ class MyGame(arcade.Window):
                             self.player.combo_jumps = PLAYER_MAX_JUMP_COMBO
 
                         self.player.combo_jump_timer = PLAYER_COMBO_JUMP_TIMER
+        
+        if self.player.on_ladder:
+            if self.up_pressed and not self.down_pressed:
+                self.player.change_y = PLAYER_CLIMB_SPEED
+            elif self.down_pressed and not self.up_pressed:
+                self.player.change_y = -PLAYER_CLIMB_SPEED
 
+
+        
         if not self.up_pressed:
             self.player.newJump = True
         
@@ -284,7 +304,7 @@ class MyGame(arcade.Window):
 
             if ground_hit_list:
                 self.friction = 1
-                
+
             elif ice_hit_list:
                 print("ICE")
                 self.friction = 0.1
@@ -319,6 +339,14 @@ class MyGame(arcade.Window):
         )
 
         # Ladder
+        ladder_hit_list = arcade.check_for_collision_with_list(
+            self.player, self.scene["Ladder"]
+        )
+
+        if ladder_hit_list:
+            self.player.on_ladder = True
+        else:
+            self.player.on_ladder = False
 
 
 
@@ -333,15 +361,20 @@ class MyGame(arcade.Window):
             # Add one to the score
             self.score += coin.properties["coin_value"]
 
-        self.score_text = f"Score: {int(self.score)}, there are some remaining"
+        self.score_text = f"Score: {int(self.score)}, there are {len(self.scene['Coins'])} remaining"
         
         #Keep track of time
+        self.real_timer_from_right = TIMER_FROM_RIGHT
         self.total_time += delta_time
         minutes = int(self.total_time)//60
         seconds = int(self.total_time)%60
-        milliseconds = int((self.total_time-seconds)*100)
-        self.clock_text = f"{minutes}:{seconds}:{milliseconds}"
-
+        self.milliseconds = int((self.total_time - seconds)*100//1)
+        self.clock_text = f"{minutes}:{seconds}"
+        x = 1
+        self.real_timer_from_right += 7
+        while x < len(self.clock_text):
+            self.real_timer_from_right += 14
+            x += 1
         #Move the player
         self.player_move()
 

@@ -13,10 +13,10 @@ def path(path):
 SCREEN_WIDTH = 1800
 SCREEN_HEIGHT = 880
 SCREEN_TITLE = "Skap plattformer"
-GRAVITY = 1
+GRAVITY_CONSTANT = 1
 
 # Player start position
-PLAYER_START_Y = 100
+PLAYER_START_Y = 200
 PLAYER_START_X = 100
 
 #Pixels per frame
@@ -103,6 +103,8 @@ class MyGame(arcade.Window):
         self.right_pressed = False
         self.up_pressed = False
         self.down_pressed = False
+        self.can_shoot = False
+        self.shoot_timer = 0
 
     def setup(self):
         # Game setup happens here, and calling this function should restart the game
@@ -141,6 +143,10 @@ class MyGame(arcade.Window):
         self.player.combo_jumps = 0
         self.player.on_ladder = False
         self.player.on_ground = False
+
+        # Shooting mechanics
+        self.can_shoot = True
+        self.shoot_timer = 0
         
         # Place the player
         self.player.center_x = PLAYER_START_X
@@ -149,13 +155,17 @@ class MyGame(arcade.Window):
         # Add the player to the spritelist
         self.scene.add_sprite("Player", self.player)
         # endregion
-
+        # self.scene.add_sprite_list_after("Player", "Bullet")
         # Create physics engine
-        self.physics_engine = arcade.PhysicsEnginePlatformer(
-            player_sprite = self.player, gravity_constant = 0, walls = [self.scene["Ground"], self.scene["Ice"]]
+        self.physics_engine = arcade.PymunkPhysicsEngine(
+            damping = 1,
+            gravity = (0, -GRAVITY_CONSTANT)
         )
         self.friction = 1
 
+        self.physics_engine.add_sprite_list(self.scene["Player"], 2, 0)
+        self.physics_engine.add_sprite_list(self.scene["Ground"], 1, 0)
+        
         # Clock
         self.total_time = 0
 
@@ -201,10 +211,12 @@ class MyGame(arcade.Window):
     def player_move(self):
         
         # region Useful variables for movement
-        self.player.on_ground = self.physics_engine.can_jump()
+        self.player.on_ground = self.physics_engine.check_grounding(self.player)
         # endregion
 
         # Gravity
+
+
         if not self.player.on_ground:
             if self.player.on_ladder:
                 if self.player.change_y != 0:
@@ -217,7 +229,7 @@ class MyGame(arcade.Window):
                         if self.player.change_y > 0: 
                             self.player.change_y = 0
             else:
-                self.player.change_y -= GRAVITY
+                #adself.player.change_y -= GRAVITY_CONSTANT
                 self.friction = 1
 
         # region Jump mechanics
@@ -237,20 +249,20 @@ class MyGame(arcade.Window):
                     If its 2 you have to let go and repress WHILE you're on ground, to jump.
                     """
 
-                    if self.physics_engine.can_jump():
+                    if self.physics_engine.check_grounding(self.player):
                         if JUMP_DIFFICULTY == 1:
                             self.player.newJump = False
 
                         if self.player.combo_jump_timer > 0:
                             if self.player.combo_jumps < 2:
-                                self.physics_engine.jump(PLAYER_JUMP_SPEED+PLAYER_COMBO_JUMP_BOOST*self.player.combo_jumps)
+                                self.player.change_y = PLAYER_JUMP_SPEED+PLAYER_COMBO_JUMP_BOOST*self.player.combo_jumps
                                 arcade.play_sound(self.jump_sound)
                             else:
                                 arcade.play_sound(self.big_jump_sound)
-                                self.physics_engine.jump(PLAYER_JUMP_SPEED+PLAYER_COMBO_JUMP_BOOST*self.player.combo_jumps+5)
+                                self.player.change_y = PLAYER_JUMP_SPEED+PLAYER_COMBO_JUMP_BOOST*self.player.combo_jumps+5
                         else:
                             self.player.combo_jumps = 0
-                            self.physics_engine.jump(PLAYER_JUMP_SPEED)
+                            self.player.change_y = PLAYER_JUMP_SPEED
                             arcade.play_sound(self.jump_sound)
 
                         self.player.combo_jumps += 1
@@ -320,10 +332,13 @@ class MyGame(arcade.Window):
                         self.player.change_x = 0
         # endregion
 
+        # Bullet mechanics
+
+
     def on_update(self, delta_time):
         #This should be called 60 times per second
         
-        self.physics_engine.update()
+        self.physics_engine.step()
         
         # Check if player fell off the map
         if self.player.center_y < -100:

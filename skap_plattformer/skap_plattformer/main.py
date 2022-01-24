@@ -84,6 +84,7 @@ class GameWindow(arcade.Window):
         # Track the current state of what key is pressed
         self.left_pressed: bool = False
         self.right_pressed: bool = False
+        self.up_pressed: bool = False
 
         # Physics engine
         self.physics_engine = Optional[arcade.PymunkPhysicsEngine]
@@ -175,17 +176,19 @@ class GameWindow(arcade.Window):
     def on_key_press(self, key, modifiers):
         """Called whenever a key is pressed. """
 
-        if key == arcade.key.LEFT:
+        if key == arcade.key.LEFT or key == arcade.key.A:
             self.left_pressed = True
-        elif key == arcade.key.RIGHT:
+        elif key == arcade.key.RIGHT or key == arcade.key.D:
             self.right_pressed = True
+        elif key == arcade.key.UP or key == arcade.key.W:
+            self.up_pressed = True
 
     def on_key_release(self, key, modifiers):
         """Called when the user releases a key. """
 
-        if key == arcade.key.LEFT:
+        if key == arcade.key.LEFT or key == arcade.key.A:
             self.left_pressed = False
-        elif key == arcade.key.RIGHT:
+        elif key == arcade.key.RIGHT or key == arcade.key.D:
             self.right_pressed = False
 
     def on_update(self, delta_time):
@@ -205,7 +208,7 @@ class GameWindow(arcade.Window):
             # Set friction to zero for the player while moving
             self.physics_engine.set_friction(self.player_sprite, 0)
         else:
-            # Player's feet are not moving. Therefore,, up the friction so we stop.
+            # Player's feet are not moving. Therefore, up the friction so we stop.
             self.physics_engine.set_friction(self.player_sprite, 1.0)
 
         # Move items in the physics engine

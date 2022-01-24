@@ -70,8 +70,39 @@ class GameWindow(arcade.Window):
         # Init the parent class
         super().__init__(width, height, title)
 
-        # Player sprite
-        self.player_sprite: Optional[arcade.Sprite] = None
+        # Init the tile map
+        self.tile_map = None
+        self.end_of_map = None
+        self.friction = None
+
+        # Level
+        self.level = 1
+
+        # Scene object
+        self.scene = None
+
+        # Physics engine
+        self.physics_engine = None
+
+        # Cameras
+        self.player_camera = None
+        self.gui_camera = None
+
+        # Score
+        self.score = 0
+
+        # Timer
+        self.total_timer = 0.0
+        self.real_timer_from_right = 60
+
+        # Load sounds
+        self.collect_coin_sound = arcade.load_sound(":resources:sounds/coin1.wav")
+        self.jump_sound = arcade.load_sound(":resources:sounds/phaseJump1.wav")
+        self.big_jump_sound = arcade.load_sound(":resources:sounds/jump3.wav")
+        self.land_sound = arcade.load_sound(":resources:sounds/rockHit2.ogg")
+
+        # Set background color
+        arcade.set_background_color(arcade.color.AMAZON)
 
         # Sprite lists we need
         self.player_list: Optional[arcade.SpriteList] = None
@@ -79,18 +110,13 @@ class GameWindow(arcade.Window):
         self.bullet_list: Optional[arcade.SpriteList] = None
         self.item_list: Optional[arcade.SpriteList] = None
 
-
-
         # Track the current state of what key is pressed
         self.left_pressed: bool = False
         self.right_pressed: bool = False
         self.up_pressed: bool = False
+        self.down_pressed: bool = False
 
-        # Physics engine
-        self.physics_engine = Optional[arcade.PymunkPhysicsEngine]
 
-        # Set background color
-        arcade.set_background_color(arcade.color.AMAZON)
 
     def setup(self):
         """ Set up everything with the game """

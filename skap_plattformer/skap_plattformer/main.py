@@ -45,7 +45,6 @@ SCORE_FROM_TOP = 20
 # Constants for color
 WHITE = arcade.color.WHITE
 
-
 # --- Physics forces. Higher number, faster accelerating.
 
 # Gravity
@@ -104,6 +103,10 @@ class GameWindow(arcade.Window):
         # Timer
         self.total_time = 0.0
         self.real_timer_from_right = 60
+        self.clock_text = ""
+        self.minutes = 0
+        self.seconds = 0
+        self.milliseconds = 0
 
         # Load sounds
         self.collect_coin_sound = arcade.load_sound(":resources:sounds/coin1.wav")
@@ -128,8 +131,6 @@ class GameWindow(arcade.Window):
         self.up_pressed: bool = False
         self.down_pressed: bool = False
 
-
-
     def setup(self):
         """ Set up everything with the game """
 
@@ -140,10 +141,6 @@ class GameWindow(arcade.Window):
         # Map name
         map_name = "assets/levels/secretTestLevel.tmx"
 
-        # Create the sprite lists
-        self.player_list = arcade.SpriteList()
-        self.bullet_list = arcade.SpriteList()
-
         # Load in TileMap
         self.tile_map = arcade.load_tilemap(path(map_name), SPRITE_SCALING_TILES)
 
@@ -152,9 +149,26 @@ class GameWindow(arcade.Window):
 
         self.score = 0
 
+        # Create the missing sprite lists
+        self.player_list = arcade.SpriteList()
+        self.bullet_list = arcade.SpriteList()
+
+        layers = ["BackgroundTile", "Ground", "Ice", "Ladder", "DecorationBehindPlayer", "Player", "DynamicItem",
+                  "Item", "Coin", "Platform", "DecorationInFrontPlayer"]
+        if "BackgroundTile" not in self.scene.name_mapping:
+            self.scene.add_sprite_list("BackgroundTile")
+
+        previous_layer = "BackgroundTile"
+        for name in layers:
+            if name not in self.scene.name_mapping:
+                self.scene.add_sprite_list_after(name, previous_layer)
+                previous_layer = name
+
         # region Set up player
         image_source = path("assets/images/skapning-export.png")
         self.player = arcade.Sprite(image_source, 1, hit_box_algorithm='Simple')
+        self.scene.add_sprite_list_before("Player", "DecorationInFrontPlayer")
+        self.scene.add_sprite("Player", self.player)
         self.player.newJump = True
         self.player.combo_jump_timer = 0
         self.player.combo_jumps = 0
@@ -240,6 +254,8 @@ class GameWindow(arcade.Window):
 
     def on_update(self, delta_time):
         """ Movement and game logic """
+
+        # region Player Left/Right
         self.player.on_ground = self.physics_engine.is_on_ground(self.player)
         # Update player forces based on keys pressed
         if self.left_pressed and not self.right_pressed:
@@ -257,12 +273,15 @@ class GameWindow(arcade.Window):
         else:
             # Player's feet are not moving. Therefore, up the friction so we stop.
             self.physics_engine.set_friction(self.player, 1.0)
+        # endregion
 
         # Jumping mechanics
         if self.player.on_ground:
-            print("On ground")
+            self.player.on_ground = True
+        else:
+            self.player.on_ground = False
 
-        self.score_text = f"Score: {int(self.score)}, there are {len(self.scene['Coins'])} remaining"
+        self.score_text = f"Score: {int(self.score)}, there are {len(self.scene['Coin'])} remaining"
 
         # Keep track of time
         self.real_timer_from_right = TIMER_FROM_RIGHT
@@ -280,7 +299,6 @@ class GameWindow(arcade.Window):
         # Move the camera
         self.center_camera_on_player()
 
-
         # Move items in the physics engine
         self.physics_engine.step()
 
@@ -293,7 +311,7 @@ class GameWindow(arcade.Window):
 
         # Draw the game
         self.scene.draw()
-        #self.scene.draw_hit_boxes()
+        # self.scene.draw_hit_boxes()
 
         # Draw the gui
         self.gui_camera.use()
@@ -336,9 +354,6 @@ class GameWindow(arcade.Window):
         player_centered = screen_center_x, screen_center_y
 
         self.player_camera.move_to(player_centered)
-
-
-
 
 
 def main():

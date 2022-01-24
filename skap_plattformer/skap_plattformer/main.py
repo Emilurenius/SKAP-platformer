@@ -34,6 +34,7 @@ PLAYER_SLOW_DOWN = 1
 JUMP_DIFFICULTY = 1
 
 # Placement of GUI
+
 # Scoreboard
 SCORE_FROM_TOP = 25
 SCORE_FROM_LEFT = 10
@@ -43,12 +44,13 @@ TIMER_FROM_TOP = 25
 TIMER_FROM_RIGHT = 41
 
 
-# sprite scaling
+# region sprite scaling
 CHARACTER_SCALING = 1
 TILE_SCALING = 0.5
 COIN_SCALING = 0.5
 SPRITE_PIXEL_SIZE = 256
 GRID_PIXEL_SIZE = SPRITE_PIXEL_SIZE * TILE_SCALING
+# endregion
 
 # Constants for colors
 BLUE = arcade.csscolor.CORNFLOWER_BLUE
@@ -93,7 +95,6 @@ class MyGame(arcade.Window):
         self.big_jump_sound = arcade.load_sound(":resources:sounds/jump3.wav")
         self.land_sound = arcade.load_sound(":resources:sounds/rockHit2.ogg")
 
-        
         # Set background color
         arcade.set_background_color(BLUE)
 
@@ -112,7 +113,7 @@ class MyGame(arcade.Window):
         self.GUI_camera = arcade.Camera(self.width, self.height)
 
         #Name of map file to load
-        map_name = path("assets/levels/thing3.tmx")
+        map_name = path("assets/levels/secretTestLevel.tmx")
 
         # Layer specific options are defined based on Layer names in a dictionary
         # Doing this will make the SpriteList for the platforms layer

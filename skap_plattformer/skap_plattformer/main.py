@@ -91,10 +91,6 @@ class MyGame(arcade.Window):
         # Timer
         self.total_time = 0.0
         self.real_timer_from_right = 60
-        self.milliseconds = 0
-        self.seconds = 0
-        self.minutes = 0
-        self.clock_text = ""
         
         # Load sounds
         self.collect_coin_sound = arcade.load_sound(":resources:sounds/coin1.wav")
@@ -291,7 +287,7 @@ class MyGame(arcade.Window):
         
         # Coins
         coin_hit_list = arcade.check_for_collision_with_list(
-            self.player, self.scene["Coin"]
+            self.player, self.scene["Coins"]
         )
 
         # Ladder
@@ -317,7 +313,7 @@ class MyGame(arcade.Window):
             # Add one to the score
             self.score += coin.properties["coin_value"]
 
-        self.score_text = f"Score: {int(self.score)}, there are {len(self.scene['Coin'])} remaining"
+        self.score_text = f"Score: {int(self.score)}, there are {len(self.scene['Coins'])} remaining"
         
         #Keep track of time
         self.real_timer_from_right = TIMER_FROM_RIGHT
@@ -338,32 +334,31 @@ class MyGame(arcade.Window):
         self.center_camera_on_player()
 
     def on_key_press(self, key, modifiers):
-        # Called when a key is pressed
-
-        self.key_event(key, modifiers, True)
+        #Called when a key is pressed 
+        
+        if key == arcade.key.UP or key == arcade.key.W:
+            self.up_pressed = True
+        if key == arcade.key.LEFT or key == arcade.key.A:
+            self.left_pressed = True
+        if key == arcade.key.DOWN or key == arcade.key.S:
+            self.down_pressed = True
+        if key == arcade.key.RIGHT or key == arcade.key.D:
+            self.right_pressed = True
         if key == arcade.key.ESCAPE:
             self.setup()
 
     def on_key_release(self, key, modifiers):
+        #Called when a key is released
 
-        # Called when a key is released
-        self.key_event(key, modifiers, False)
-
-    def key_event(self, key, modifiers, bool_pressed):
-        if key in [arcade.key.UP, arcade.key.W, arcade.key.LEFT, arcade.key.A,
-                   arcade.key.DOWN, arcade.key.S, arcade.key.RIGHT, arcade.key.D]:
-
-            if key == arcade.key.UP or key == arcade.key.W:
-                self.up_pressed = bool_pressed
-            if key == arcade.key.LEFT or key == arcade.key.A:
-                self.left_pressed = bool_pressed
-            if key == arcade.key.DOWN or key == arcade.key.S:
-                self.down_pressed = bool_pressed
-            if key == arcade.key.RIGHT or key == arcade.key.D:
-                self.right_pressed = bool_pressed
-
-
-
+        if key == arcade.key.UP or key == arcade.key.W:
+            self.up_pressed = False
+        if key == arcade.key.LEFT or key == arcade.key.A:
+            self.left_pressed = False
+        if key == arcade.key.DOWN or key == arcade.key.S:
+            self.down_pressed = False
+        if key == arcade.key.RIGHT or key == arcade.key.D:
+            self.right_pressed = False
+        
     def center_camera_on_player(self):
         screen_center_x = self.player.center_x - (self.player_camera.viewport_width / 2)
         screen_center_y = self.player.center_y - (self.player_camera.viewport_height / 2)

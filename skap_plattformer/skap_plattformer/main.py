@@ -35,7 +35,7 @@ SCREEN_WIDTH = SPRITE_SIZE * SCREEN_GRID_WIDTH
 SCREEN_HEIGHT = SPRITE_SIZE * SCREEN_GRID_HEIGHT
 
 # GUI placements
-TIMER_FROM_RIGHT = 100
+TIMER_FROM_RIGHT = 38
 TIMER_FROM_TOP = 20
 SCORE_FROM_LEFT = 20
 SCORE_FROM_TOP = 20
@@ -50,10 +50,10 @@ GRAVITY = 1500
 
 # Damping - Amount of speed lost per second
 DEFAULT_DAMPING = 1.0
-PLAYER_DAMPING = 0.5
+PLAYER_DAMPING = 0.00001
 
 # Friction between objects
-PLAYER_FRICTION = 1.0
+PLAYER_FRICTION = 2.0
 WALL_FRICTION = 0.7
 DYNAMIC_ITEM_FRICTION = 0.6
 
@@ -65,7 +65,7 @@ PLAYER_MAX_HORIZONTAL_SPEED = 450
 PLAYER_MAX_VERTICAL_SPEED = 1600
 PLAYER_MAX_CLIMB_SPEED = 50
 PLAYER_MOVE_FORCE_ON_GROUND = 8000
-PLAYER_MOVE_FORCE_IN_AIR = 2000
+PLAYER_MOVE_FORCE_IN_AIR = 2500
 PLAYER_CLIMB_FORCE = 2000
 PLAYER_JUMP_FORCE = 1000
 PLAYER_MAX_JUMP_COMBO = 2
@@ -238,6 +238,8 @@ class MyGame(arcade.Window):
                                             collision_type="wall",
                                             body_type=arcade.PymunkPhysicsEngine.STATIC)
 
+
+
         # Create the items
         self.physics_engine.add_sprite_list(self.scene["Item"],
                                             friction=DYNAMIC_ITEM_FRICTION,
@@ -378,21 +380,48 @@ class MyGame(arcade.Window):
             self.physics_engine.gravity = GRAVITY
         # endregion
 
+        # region Collision Detection
+
+        # region Coins
+        coin_hit_list = arcade.check_for_collision_with_list(
+            self.player, self.scene["Coin"]
+        )
+        # Loop through each coin we hit (if any) and remove it
+        for coin in coin_hit_list:
+            # Remove the coin
+            coin.remove_from_sprite_lists()
+            # Play a sound
+            arcade.play_sound(self.collect_coin_sound)
+            # Add one to the score
+            self.score += coin.properties["coin_value"]
+
+        # Ladder
+        # endregion
+
+        # region Ladders
+        ladder_hit_list = arcade.check_for_collision_with_list(self.player, self.scene["Ladder"])
+        if ladder_hit_list:
+            self.player.on_ladder = True
+        else:
+            self.player.on_ladder = False
+        # endregion
 
         self.score_text = f"Score: {int(self.score)}, there are {len(self.scene['Coin'])} remaining"
 
         # region Keep track of time
         self.real_timer_from_right = TIMER_FROM_RIGHT
         self.total_time += delta_time
-        minutes = int(self.total_time) // 60
-        seconds = int(self.total_time) % 60
-        self.milliseconds = int((self.total_time - seconds) * 100 // 1)
-        self.clock_text = f"{minutes}:{seconds}"
+        self.minutes = int(self.total_time) // 60
+        self.seconds = int(self.total_time) % 60
+        self.milliseconds = int((self.total_time - self.seconds - self.minutes*60) * 100 // 1)
+        self.clock_text = f"{self.minutes}:{self.seconds}"
         x = 1
         self.real_timer_from_right += 7
         while x < len(self.clock_text):
             self.real_timer_from_right += 14
             x += 1
+        # endregion
+
         # endregion
 
         # Move the camera
@@ -408,7 +437,7 @@ class MyGame(arcade.Window):
         # Make the camera follow the player
         self.player_camera.use()
 
-        # Draw the game
+        # Draw the level
         self.scene.draw()
         # self.scene.draw_hit_boxes()
 

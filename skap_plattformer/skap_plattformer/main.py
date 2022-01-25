@@ -62,13 +62,12 @@ DYNAMIC_ITEM_FRICTION = 0.6
 # Mass (defaults to 1)
 PLAYER_MASS = 2.0
 
-# Keep player from going too fast
+# Player constants
 PLAYER_MAX_HORIZONTAL_SPEED = 450
 PLAYER_MAX_VERTICAL_SPEED = 1600
-
-# Force applied while on the ground
 PLAYER_MOVE_FORCE_ON_GROUND = 8000
-
+PLAYER_MOVE_FORCE_IN_AIR = 1000
+PLAYER_JUMP_FORCE = 1000
 
 class GameWindow(arcade.Window):
     """ Main Window """
@@ -99,6 +98,7 @@ class GameWindow(arcade.Window):
 
         # Score
         self.score = 0
+        self.score_text = ""
 
         # Timer
         self.total_time = 0.0
@@ -243,6 +243,8 @@ class GameWindow(arcade.Window):
             self.right_pressed = True
         elif key == arcade.key.UP or key == arcade.key.W:
             self.up_pressed = True
+        elif key == arcade.key.DOWN or key == arcade.key.S:
+            self.down_pressed = True
 
     def on_key_release(self, key, modifiers):
         """Called when the user releases a key. """
@@ -251,6 +253,10 @@ class GameWindow(arcade.Window):
             self.left_pressed = False
         elif key == arcade.key.RIGHT or key == arcade.key.D:
             self.right_pressed = False
+        elif key == arcade.key.UP or key == arcade.key.W:
+            self.up_pressed = False
+        elif key == arcade.key.DOWN or key == arcade.key.S:
+            self.down_pressed = False
 
     def on_update(self, delta_time):
         """ Movement and game logic """
@@ -260,13 +266,19 @@ class GameWindow(arcade.Window):
         # Update player forces based on keys pressed
         if self.left_pressed and not self.right_pressed:
             # Create a force to the left. Apply it.
-            force = (-PLAYER_MOVE_FORCE_ON_GROUND, 0)
+            if self.player.on_ground:
+                force = (-PLAYER_MOVE_FORCE_ON_GROUND, 0)
+            else:
+                force = (-PLAYER_MOVE_FORCE_IN_AIR, 0)
             self.physics_engine.apply_force(self.player, force)
             # Set friction to zero for the player while moving
             self.physics_engine.set_friction(self.player, 0)
         elif self.right_pressed and not self.left_pressed:
             # Create a force to the right. Apply it.
-            force = (PLAYER_MOVE_FORCE_ON_GROUND, 0)
+            if self.player.on_ground:
+                force = (PLAYER_MOVE_FORCE_ON_GROUND, 0)
+            else:
+                force = (PLAYER_MOVE_FORCE_IN_AIR, 0)
             self.physics_engine.apply_force(self.player, force)
             # Set friction to zero for the player while moving
             self.physics_engine.set_friction(self.player, 0)
@@ -275,15 +287,62 @@ class GameWindow(arcade.Window):
             self.physics_engine.set_friction(self.player, 1.0)
         # endregion
 
-        # Jumping mechanics
-        if self.player.on_ground:
-            self.player.on_ground = True
-        else:
-            self.player.on_ground = False
+        # region Jump mechanics
+        if self.player.on_ground and not self.player.on_ladder:
+
+            # Decrement combo timer while you're on the ground
+            self.player.combo_jump_timer -= 1
+
+            if self.player.newJump:
+                if self.up_pressed and not self.down_pressed:
+                    """
+                    Jump mechanics:
+                    If JUMP_DIFFICULTY is 0, you can constantly jump by holding its key
+
+                    If its 1 You have to let go and repress, to jump the moment you touch ground
+
+                    If its 2 you have to let go and repress WHILE you're on ground, to jump.
+                    """
+
+                    if self.player.on_ground:
+                        self.player.newJump = False
+
+                        if self.player.combo_jump_timer > 0:
+                            if self.player.combo_jumps < 2:
+                                self.physics_engine.apply_impulse(
+                                    self.player, [0, PLAYER_JUMP_FORCE + PLAYER_COMBO_JUMP_BOOST * self.player.combo_jumps])
+                                arcade.play_sound(self.jump_sound)
+                            else:
+                                arcade.play_sound(self.big_jump_sound)
+                                self.physics_engine.apply_impulse(
+                                    self.player, [0, PLAYER_JUMP_FORCE + PLAYER_COMBO_JUMP_BOOST * self.player.combo_jumps + 5])
+                        else:
+                            self.player.combo_jumps = 0
+                            self.physics_engine.apply_impulse(
+                                self.player,
+                                [0, PLAYER_JUMP_SPEED])
+                            arcade.play_sound(self.jump_sound)
+
+                        self.player.combo_jumps += 1
+                        if self.player.combo_jumps > PLAYER_MAX_JUMP_COMBO:
+                            self.player.combo_jumps = PLAYER_MAX_JUMP_COMBO
+
+                        self.player.combo_jump_timer = PLAYER_COMBO_JUMP_TIMER
+
+        if self.player.on_ladder:
+            if self.up_pressed and not self.down_pressed:
+                self.player.change_y = PLAYER_CLIMB_SPEED
+            elif self.down_pressed and not self.up_pressed:
+                self.player.change_y = -PLAYER_CLIMB_SPEED
+
+        if not self.up_pressed:
+            self.player.newJump = True
+
+        # endregion
 
         self.score_text = f"Score: {int(self.score)}, there are {len(self.scene['Coin'])} remaining"
 
-        # Keep track of time
+        # region Keep track of time
         self.real_timer_from_right = TIMER_FROM_RIGHT
         self.total_time += delta_time
         minutes = int(self.total_time) // 60
@@ -295,6 +354,7 @@ class GameWindow(arcade.Window):
         while x < len(self.clock_text):
             self.real_timer_from_right += 14
             x += 1
+        # endregion
 
         # Move the camera
         self.center_camera_on_player()

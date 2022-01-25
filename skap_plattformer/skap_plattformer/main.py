@@ -3,14 +3,9 @@
 # importing modules and libraries as needed
 import arcade
 import os
-import math
-from typing import Optional
 
 
 # More convenient way to find files
-from skap_plattformer.tests.copypaste import PLAYER_MAX_JUMP_COMBO, PLAYER_COMBO_JUMP_BOOST
-
-
 def path(file_address):
     return os.path.realpath(f"{__file__}/../../{file_address}")
 
@@ -77,6 +72,7 @@ PLAYER_MAX_JUMP_COMBO = 2
 PLAYER_COMBO_JUMP_BOOST = 150
 PLAYER_COMBO_JUMP_TIMER = 9
 PLAYER_CLIMB_SPEED = 10
+
 
 class MyGame(arcade.Window):
     """ Main Window """

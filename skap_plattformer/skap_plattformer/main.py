@@ -1,8 +1,7 @@
 # Skap platforming game
 
 # importing modules and libraries as needed
-import arcade
-import os
+import arcade, os, json
 
 
 # More convenient way to find files
@@ -233,12 +232,14 @@ class MyGame(arcade.Window):
         # PymunkPhysicsEngine.KINEMATIC objects will move, but are assumed to be
         # repositioned by code and don't respond to physics forces.
         # Dynamic is default.
+        print(str(self.scene["Ground"]))
+        print(repr(self.scene["Ground"]))
+        for thing in self.scene["Ground"]:
+            print(thing)
         self.physics_engine.add_sprite_list(self.scene["Ground"],
                                             friction=WALL_FRICTION,
                                             collision_type="wall",
                                             body_type=arcade.PymunkPhysicsEngine.STATIC)
-
-
 
         # Create the items
         self.physics_engine.add_sprite_list(self.scene["Item"],

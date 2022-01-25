@@ -8,6 +8,9 @@ from typing import Optional
 
 
 # More convenient way to find files
+from skap_plattformer.tests.copypaste import PLAYER_MAX_JUMP_COMBO, PLAYER_COMBO_JUMP_BOOST
+
+
 def path(file_address):
     return os.path.realpath(f"{__file__}/../../{file_address}")
 
@@ -52,7 +55,7 @@ GRAVITY = 1500
 
 # Damping - Amount of speed lost per second
 DEFAULT_DAMPING = 1.0
-PLAYER_DAMPING = 0.4
+PLAYER_DAMPING = 0.5
 
 # Friction between objects
 PLAYER_FRICTION = 1.0
@@ -65,11 +68,17 @@ PLAYER_MASS = 2.0
 # Player constants
 PLAYER_MAX_HORIZONTAL_SPEED = 450
 PLAYER_MAX_VERTICAL_SPEED = 1600
+PLAYER_MAX_CLIMB_SPEED = 50
 PLAYER_MOVE_FORCE_ON_GROUND = 8000
-PLAYER_MOVE_FORCE_IN_AIR = 1000
+PLAYER_MOVE_FORCE_IN_AIR = 2000
+PLAYER_CLIMB_FORCE = 2000
 PLAYER_JUMP_FORCE = 1000
+PLAYER_MAX_JUMP_COMBO = 2
+PLAYER_COMBO_JUMP_BOOST = 150
+PLAYER_COMBO_JUMP_TIMER = 9
+PLAYER_CLIMB_SPEED = 10
 
-class GameWindow(arcade.Window):
+class MyGame(arcade.Window):
     """ Main Window """
 
     def __init__(self, width, height, title):
@@ -131,6 +140,10 @@ class GameWindow(arcade.Window):
         self.up_pressed: bool = False
         self.down_pressed: bool = False
 
+        self.player = None
+        self.damping = 0
+        self.gravity = 0
+
     def setup(self):
         """ Set up everything with the game """
 
@@ -190,14 +203,14 @@ class GameWindow(arcade.Window):
         # For top-down games, this is basically the friction for moving objects.
         # For platformers with gravity, this should probably be set to 1.0.
         # Default value is 1.0 if not specified.
-        damping = DEFAULT_DAMPING
+        self.damping = DEFAULT_DAMPING
 
         # Set the gravity. (0, 0) is good for outer space and top-down.
-        gravity = (0, -GRAVITY)
+        self.gravity = (0, -GRAVITY)
 
         # Create the physics engine
-        self.physics_engine = arcade.PymunkPhysicsEngine(damping=damping,
-                                                         gravity=gravity)
+        self.physics_engine = arcade.PymunkPhysicsEngine(damping=self.damping,
+                                                         gravity=self.gravity)
 
         # Add the player.
         # For the player, we set the damping to a lower value, which increases
@@ -315,12 +328,12 @@ class GameWindow(arcade.Window):
                             else:
                                 arcade.play_sound(self.big_jump_sound)
                                 self.physics_engine.apply_impulse(
-                                    self.player, [0, PLAYER_JUMP_FORCE + PLAYER_COMBO_JUMP_BOOST * self.player.combo_jumps + 5])
+                                    self.player, [0, PLAYER_JUMP_FORCE + PLAYER_COMBO_JUMP_BOOST * self.player.combo_jumps + 500])
                         else:
                             self.player.combo_jumps = 0
                             self.physics_engine.apply_impulse(
                                 self.player,
-                                [0, PLAYER_JUMP_SPEED])
+                                [0, PLAYER_JUMP_FORCE])
                             arcade.play_sound(self.jump_sound)
 
                         self.player.combo_jumps += 1
@@ -329,16 +342,46 @@ class GameWindow(arcade.Window):
 
                         self.player.combo_jump_timer = PLAYER_COMBO_JUMP_TIMER
 
-        if self.player.on_ladder:
-            if self.up_pressed and not self.down_pressed:
-                self.player.change_y = PLAYER_CLIMB_SPEED
-            elif self.down_pressed and not self.up_pressed:
-                self.player.change_y = -PLAYER_CLIMB_SPEED
-
         if not self.up_pressed:
             self.player.newJump = True
-
         # endregion
+
+        # region Climbing
+        ladder_hit_list = arcade.check_for_collision_with_list(
+            self.player, self.scene["Ladder"]
+        )
+
+        if ladder_hit_list:
+            self.player.on_ladder = True
+        else:
+            self.player.on_ladder = False
+
+        if self.player.on_ladder:
+            self.physics_engine.gravity = (0, 0)
+            self.physics_engine.damping = 0.01
+            self.physics_engine.max_vertical_velocity = PLAYER_MAX_CLIMB_SPEED
+
+            if self.up_pressed and not self.down_pressed:
+                force = (0, PLAYER_CLIMB_FORCE)
+                self.physics_engine.apply_force(self.player, force)
+                # Set friction to zero for the player while moving
+                self.physics_engine.set_friction(self.player, 0)
+
+            elif self.down_pressed and not self.up_pressed:
+                force = (0, -PLAYER_CLIMB_FORCE)
+                self.physics_engine.apply_force(self.player, force)
+                # Set friction to zero for the player while moving
+                self.physics_engine.set_friction(self.player, 0)
+
+            else:
+                self.physics_engine.set_friction(self.player, PLAYER_FRICTION)
+
+        else:
+            self.physics_engine.damping = 1.0
+            self.physics_engine.max_vertical_velocity = PLAYER_MAX_VERTICAL_SPEED
+            self.physics_engine.gravity = GRAVITY
+        # endregion
+
 
         self.score_text = f"Score: {int(self.score)}, there are {len(self.scene['Coin'])} remaining"
 
@@ -418,7 +461,7 @@ class GameWindow(arcade.Window):
 
 def main():
     """ Main function """
-    window = GameWindow(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
+    window = MyGame(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
     window.setup()
     arcade.run()
 

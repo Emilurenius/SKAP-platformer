@@ -1,0 +1,12 @@
+{
+  "weapons": {
+    "standardPooz": {
+      "name": "Standard Pooz",
+      "desc": "A pooz dispenser loaded with delicious tiny bricks of candy",
+      "damage": 10,
+      "damageEffect": "none",
+      "ammo": 10,
+      "reloadTime": 1
+    }
+  }
+}

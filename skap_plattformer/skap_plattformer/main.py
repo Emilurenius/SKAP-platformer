@@ -49,7 +49,7 @@ GRAVITY = 1500
 
 # Damping - Amount of speed lost per second
 DEFAULT_DAMPING = 1.0
-PLAYER_DAMPING = 0.00001
+PLAYER_DAMPING = 0.3
 
 # Friction between objects
 PLAYER_FRICTION = 2.0
@@ -62,7 +62,7 @@ PLAYER_MASS = 2.0
 # Player constants
 PLAYER_MAX_HORIZONTAL_SPEED = 450
 PLAYER_MAX_VERTICAL_SPEED = 1600
-PLAYER_MAX_CLIMB_SPEED = 50
+PLAYER_MAX_CLIMB_SPEED = 300
 PLAYER_MOVE_FORCE_ON_GROUND = 8000
 PLAYER_MOVE_FORCE_IN_AIR = 2500
 PLAYER_CLIMB_FORCE = 2000
@@ -80,7 +80,7 @@ class MyGame(arcade.Window):
         """ Create the variables """
 
         # Init the parent class
-        super().__init__(width, height, title)
+        super().__init__(width, height, title, resizable=True)
 
         # Init the tile map
         self.tile_map = None
@@ -139,12 +139,28 @@ class MyGame(arcade.Window):
         self.damping = 0
         self.gravity = 0
 
+        self.screen_width = SCREEN_WIDTH
+        self.screen_height = SCREEN_HEIGHT
+
+    def on_resize(self, width, height):
+        """ This method is automatically called when the window is resized. """
+
+        # Call the parent. Failing to do this will mess up the coordinates,
+        # and default to 0,0 at the center and the edges being -1 to 1.
+        super().on_resize(width, height)
+        self.screen_width = width
+        self.screen_height = height
+        self.player_camera.resize(width, height)
+        self.gui_camera.resize(width, height)
+        print(f"Window resized to: {width}, {height}")
+
+
     def setup(self):
         """ Set up everything with the game """
 
         # Create Camera
-        self.player_camera = arcade.Camera(self.width, self.height)
-        self.gui_camera = arcade.Camera(self.width, self.height)
+        self.player_camera = arcade.Camera(self.screen_width, self.screen_height)
+        self.gui_camera = arcade.Camera(self.screen_width, self.screen_height)
 
         # Map name
         map_name = "assets/levels/secretTestLevel.tmx"
@@ -218,6 +234,7 @@ class MyGame(arcade.Window):
         # in top-down games that friction moving along the 'floor' is controlled
         # by damping.
         self.physics_engine.add_sprite(self.player,
+                                       damping=PLAYER_DAMPING,
                                        friction=PLAYER_FRICTION,
                                        mass=PLAYER_MASS,
                                        moment=arcade.PymunkPhysicsEngine.MOMENT_INF,
@@ -232,10 +249,9 @@ class MyGame(arcade.Window):
         # PymunkPhysicsEngine.KINEMATIC objects will move, but are assumed to be
         # repositioned by code and don't respond to physics forces.
         # Dynamic is default.
-        print(str(self.scene["Ground"]))
-        print(repr(self.scene["Ground"]))
-        for thing in self.scene["Ground"]:
-            print(thing)
+        print(dir(self.scene["Ground"]))
+
+
         self.physics_engine.add_sprite_list(self.scene["Ground"],
                                             friction=WALL_FRICTION,
                                             collision_type="wall",
@@ -307,15 +323,6 @@ class MyGame(arcade.Window):
 
             if self.player.newJump:
                 if self.up_pressed and not self.down_pressed:
-                    """
-                    Jump mechanics:
-                    If JUMP_DIFFICULTY is 0, you can constantly jump by holding its key
-
-                    If its 1 You have to let go and repress, to jump the moment you touch ground
-
-                    If its 2 you have to let go and repress WHILE you're on ground, to jump.
-                    """
-
                     if self.player.on_ground:
                         self.player.newJump = False
 
@@ -362,21 +369,22 @@ class MyGame(arcade.Window):
 
             if self.up_pressed and not self.down_pressed:
                 force = (0, PLAYER_CLIMB_FORCE)
-                self.physics_engine.apply_force(self.player, force)
+                self.physics_engine.apply_force(self.player, [0, PLAYER_CLIMB_FORCE*100])
+                # self.physics_engine.set_velocity(self.player, [self.physics_engine.get_physics_object(self.player).body.velocity.x, 300])
                 # Set friction to zero for the player while moving
                 self.physics_engine.set_friction(self.player, 0)
 
             elif self.down_pressed and not self.up_pressed:
                 force = (0, -PLAYER_CLIMB_FORCE)
-                self.physics_engine.apply_force(self.player, force)
-                # Set friction to zero for the player while moving
+                self.physics_engine.apply_force(self.player, [0, -PLAYER_CLIMB_FORCE])
+
                 self.physics_engine.set_friction(self.player, 0)
 
             else:
-                self.physics_engine.set_friction(self.player, PLAYER_FRICTION)
+                self.physics_engine.set_velocity(self.player, [self.physics_engine.get_physics_object(self.player).body.velocity.x, 0])
 
         else:
-            self.physics_engine.damping = 1.0
+            self.physics_engine.damping = 0.3
             self.physics_engine.max_vertical_velocity = PLAYER_MAX_VERTICAL_SPEED
             self.physics_engine.gravity = GRAVITY
         # endregion
@@ -448,7 +456,7 @@ class MyGame(arcade.Window):
         arcade.draw_text(
             self.score_text,
             SCORE_FROM_LEFT,
-            SCREEN_HEIGHT - SCORE_FROM_TOP,
+            self.screen_height - SCORE_FROM_TOP,
             WHITE,
             18
         )
@@ -456,23 +464,23 @@ class MyGame(arcade.Window):
         # Draw the timer
         arcade.draw_text(
             self.clock_text,
-            SCREEN_WIDTH - self.real_timer_from_right,
-            SCREEN_HEIGHT - TIMER_FROM_TOP,
+            self.screen_width - self.real_timer_from_right,
+            self.screen_height - TIMER_FROM_TOP,
             WHITE,
             18
         )
 
         arcade.draw_text(
             f":{self.milliseconds}",
-            SCREEN_WIDTH - TIMER_FROM_RIGHT,
-            SCREEN_HEIGHT - TIMER_FROM_TOP,
+            self.screen_width - TIMER_FROM_RIGHT,
+            self.screen_height - TIMER_FROM_TOP,
             WHITE,
             18
         )
 
     def center_camera_on_player(self):
-        screen_center_x = self.player.center_x - (self.player_camera.viewport_width / 2)
-        screen_center_y = self.player.center_y - (self.player_camera.viewport_height / 2)
+        screen_center_x = self.player.center_x - (self.screen_width / 2)
+        screen_center_y = self.player.center_y - (self.screen_height / 2)
 
         # Stop it from scrolling past 0
         if screen_center_x < 0:

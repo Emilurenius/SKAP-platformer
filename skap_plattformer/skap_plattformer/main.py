@@ -89,8 +89,6 @@ def load_animation_sprite_sheet(file_path, split_width):
         image_list.append(img.crop((left, top, right, bottom)))
         print(path(f"assets/items/Leapy_Lime{x}"))
         print(x)
-        image_list[x].show()
-        image_list[x].save(path(f"assets/items/Leapy_Lime_{x}.png"))
 
         x += 1
     return image_list

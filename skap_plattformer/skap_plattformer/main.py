@@ -2,6 +2,7 @@
 
 # importing modules and libraries as needed
 import arcade, os, json
+from PIL import Image
 
 
 # More convenient way to find files
@@ -45,7 +46,7 @@ WHITE = arcade.color.WHITE
 # --- Physics forces. Higher number, faster accelerating.
 
 # Gravity
-GRAVITY = 1500
+GRAVITY = 2500
 
 # Damping - Amount of speed lost per second
 DEFAULT_DAMPING = 1.0
@@ -64,14 +65,37 @@ PLAYER_MAX_HORIZONTAL_SPEED = 450
 PLAYER_MAX_VERTICAL_SPEED = 1600
 PLAYER_MAX_CLIMB_SPEED = 300
 PLAYER_MOVE_FORCE_ON_GROUND = 8000
-PLAYER_MOVE_FORCE_IN_AIR = 2500
+PLAYER_MOVE_FORCE_IN_AIR = 3000
 PLAYER_CLIMB_FORCE = 2000
-PLAYER_JUMP_FORCE = 1000
-PLAYER_MAX_JUMP_COMBO = 2
-PLAYER_COMBO_JUMP_BOOST = 150
-PLAYER_COMBO_JUMP_TIMER = 9
+PLAYER_JUMP_FORCE = 2200
+PLAYER_JUMP_SODA_BOOST = 150
 PLAYER_CLIMB_SPEED = 10
 
+
+def load_animation_sprite_sheet(file_path, split_width):
+    img = Image.open(rf"{path(file_path)}")
+    width, height = img.size
+    x = 0
+    image_list = []
+
+    while x*split_width < width:
+
+        left = x*split_width # 0 * 9
+        top = 0
+        right = split_width-1 + x*split_width # 8
+        bottom = height # 15
+
+        print(f"{left}, {top}, {right}, {bottom}")
+        image_list.append(img.crop((left, top, right, bottom)))
+        print(path(f"assets/items/Leapy_Lime{x}"))
+        print(x)
+        image_list[x].show()
+        image_list[x].save(path(f"assets/items/Leapy_Lime_{x}.png"))
+
+        x += 1
+    return image_list
+
+load_animation_sprite_sheet("assets/items/Leapy_Lime.png", 9)
 
 class MyGame(arcade.Window):
     """ Main Window """
@@ -142,6 +166,10 @@ class MyGame(arcade.Window):
         self.screen_width = SCREEN_WIDTH
         self.screen_height = SCREEN_HEIGHT
 
+        # region animations.
+
+        # endregion
+
     def on_resize(self, width, height):
         """ This method is automatically called when the window is resized. """
 
@@ -167,7 +195,6 @@ class MyGame(arcade.Window):
 
         # Load in TileMap
         self.tile_map = arcade.load_tilemap(path(map_name), SPRITE_SCALING_TILES)
-
         self.scene = arcade.Scene.from_tilemap(self.tile_map)
         self.end_of_map = self.tile_map.width * GRID_PIXEL_SIZE
 
@@ -182,11 +209,24 @@ class MyGame(arcade.Window):
         if "BackgroundTile" not in self.scene.name_mapping:
             self.scene.add_sprite_list("BackgroundTile")
 
+
+
         previous_layer = "BackgroundTile"
         for name in layers:
             if name not in self.scene.name_mapping:
                 self.scene.add_sprite_list_after(name, previous_layer)
                 previous_layer = name
+
+        for layer in self.tile_map.tiled_map.layers:
+            if layer.properties:
+                if not self.scene[layer.name]:
+                    self.scene.add_sprite_list(layer.name)
+                self.scene[layer.name].properties = layer.properties
+                print(f"Added {layer.properties} to {layer.name}")
+
+        print(self.scene["Ground"].properties)
+
+
 
         # region Set up player
         image_source = path("assets/images/skapning-export.png")
@@ -194,8 +234,7 @@ class MyGame(arcade.Window):
         self.scene.add_sprite_list_before("Player", "DecorationInFrontPlayer")
         self.scene.add_sprite("Player", self.player)
         self.player.newJump = True
-        self.player.combo_jump_timer = 0
-        self.player.combo_jumps = 0
+        self.player.jump_boost_soda = 0
         self.player.on_ladder = False
         self.player.on_ground = False
 
@@ -205,6 +244,9 @@ class MyGame(arcade.Window):
         self.player.center_y = SPRITE_SIZE * grid_y + SPRITE_SIZE / 2
         # Add to player sprite list
         self.player_list.append(self.player)
+
+        #image_source = load_animation_sprite_sheet(path("assets/items/Leapy_Lime.png"), 9)
+        #self.scene.add_sprite("Item", arcade.Sprite(image_source[0], hit_box_algorithm='Simple'))
 
         # --- Pymunk Physics Engine Setup ---
 
@@ -249,17 +291,23 @@ class MyGame(arcade.Window):
         # PymunkPhysicsEngine.KINEMATIC objects will move, but are assumed to be
         # repositioned by code and don't respond to physics forces.
         # Dynamic is default.
-        print(dir(self.scene["Ground"]))
+        print(self.scene["Ground"].properties)
 
 
         self.physics_engine.add_sprite_list(self.scene["Ground"],
-                                            friction=WALL_FRICTION,
+                                            friction=self.scene["Ground"].properties["friction"],
+                                            collision_type="wall",
+                                            body_type=arcade.PymunkPhysicsEngine.STATIC)
+
+        self.physics_engine.add_sprite_list(self.scene["Ice"],
+                                            friction=self.scene["Ice"].properties["friction"],
                                             collision_type="wall",
                                             body_type=arcade.PymunkPhysicsEngine.STATIC)
 
         # Create the items
         self.physics_engine.add_sprite_list(self.scene["Item"],
                                             friction=DYNAMIC_ITEM_FRICTION,
+                                            mass = 0.75,
                                             collision_type="item")
 
     def on_key_press(self, key, modifiers):
@@ -273,6 +321,8 @@ class MyGame(arcade.Window):
             self.up_pressed = True
         elif key == arcade.key.DOWN or key == arcade.key.S:
             self.down_pressed = True
+        elif key == arcade.key.ESCAPE:
+            self.setup()
 
     def on_key_release(self, key, modifiers):
         """Called when the user releases a key. """
@@ -317,36 +367,14 @@ class MyGame(arcade.Window):
 
         # region Jump mechanics
         if self.player.on_ground and not self.player.on_ladder:
-
-            # Decrement combo timer while you're on the ground
-            self.player.combo_jump_timer -= 1
-
             if self.player.newJump:
                 if self.up_pressed and not self.down_pressed:
                     if self.player.on_ground:
                         self.player.newJump = False
 
-                        if self.player.combo_jump_timer > 0:
-                            if self.player.combo_jumps < 2:
-                                self.physics_engine.apply_impulse(
-                                    self.player, [0, PLAYER_JUMP_FORCE + PLAYER_COMBO_JUMP_BOOST * self.player.combo_jumps])
-                                arcade.play_sound(self.jump_sound)
-                            else:
-                                arcade.play_sound(self.big_jump_sound)
-                                self.physics_engine.apply_impulse(
-                                    self.player, [0, PLAYER_JUMP_FORCE + PLAYER_COMBO_JUMP_BOOST * self.player.combo_jumps + 500])
-                        else:
-                            self.player.combo_jumps = 0
-                            self.physics_engine.apply_impulse(
-                                self.player,
-                                [0, PLAYER_JUMP_FORCE])
-                            arcade.play_sound(self.jump_sound)
-
-                        self.player.combo_jumps += 1
-                        if self.player.combo_jumps > PLAYER_MAX_JUMP_COMBO:
-                            self.player.combo_jumps = PLAYER_MAX_JUMP_COMBO
-
-                        self.player.combo_jump_timer = PLAYER_COMBO_JUMP_TIMER
+                        self.physics_engine.apply_impulse(
+                            self.player, [0, PLAYER_JUMP_FORCE + PLAYER_JUMP_SODA_BOOST * self.player.jump_boost_soda])
+                        arcade.play_sound(self.jump_sound)
 
         if not self.up_pressed:
             self.player.newJump = True
@@ -448,7 +476,7 @@ class MyGame(arcade.Window):
 
         # Draw the level
         self.scene.draw()
-        # self.scene.draw_hit_boxes()
+        self.scene.draw_hit_boxes()
 
         # Draw the gui
         self.gui_camera.use()

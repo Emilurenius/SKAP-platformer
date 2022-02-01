@@ -7,7 +7,7 @@ from PIL import Image
 
 # More convenient way to find files
 def path(file_address):
-    return os.path.realpath(f"{__file__}/../../{file_address}")
+    return os.path.realpath(f"{__file__}/../../../{file_address}")
 
 
 """
@@ -67,13 +67,13 @@ PLAYER_MAX_CLIMB_SPEED = 300
 PLAYER_MOVE_FORCE_ON_GROUND = 8000
 PLAYER_MOVE_FORCE_IN_AIR = 3000
 PLAYER_CLIMB_FORCE = 2000
-PLAYER_JUMP_FORCE = 2200
+PLAYER_JUMP_FORCE = 1500
 PLAYER_JUMP_SODA_BOOST = 150
 PLAYER_CLIMB_SPEED = 10
 
 
 def load_animation_sprite_sheet(file_path, split_width):
-    img = Image.open(rf"{path(file_path)}")
+    img = Image.open(r"E:\Documents\GitHub\SKAP-platformer\skap_plattformer\assets\player\jump_right_sprite_sheet.png")
     width, height = img.size
     x = 0
     image_list = []
@@ -84,16 +84,11 @@ def load_animation_sprite_sheet(file_path, split_width):
         top = 0
         right = split_width-1 + x*split_width # 8
         bottom = height # 15
-
-        print(f"{left}, {top}, {right}, {bottom}")
         image_list.append(img.crop((left, top, right, bottom)))
-        print(path(f"assets/items/Leapy_Lime{x}"))
-        print(x)
 
         x += 1
     return image_list
 
-load_animation_sprite_sheet("assets/items/Leapy_Lime.png", 9)
 
 class MyGame(arcade.Window):
     """ Main Window """
@@ -157,9 +152,10 @@ class MyGame(arcade.Window):
         self.up_pressed: bool = False
         self.down_pressed: bool = False
 
-        self.player = None
+        self.player = {}
         self.damping = 0
         self.gravity = 0
+
 
         self.screen_width = SCREEN_WIDTH
         self.screen_height = SCREEN_HEIGHT
@@ -189,7 +185,7 @@ class MyGame(arcade.Window):
         self.gui_camera = arcade.Camera(self.screen_width, self.screen_height)
 
         # Map name
-        map_name = "assets/levels/secretTestLevel.tmx"
+        map_name = "skap_plattformer/assets/levels/secretTestLevel.tmx"
 
         # Load in TileMap
         self.tile_map = arcade.load_tilemap(path(map_name), SPRITE_SCALING_TILES)
@@ -227,7 +223,7 @@ class MyGame(arcade.Window):
 
 
         # region Set up player
-        image_source = path("assets/images/skapning-export.png")
+        image_source = path("skap_plattformer/assets/images/skapning-export.png")
         self.player = arcade.Sprite(image_source, 1, hit_box_algorithm='Simple')
         self.scene.add_sprite_list_before("Player", "DecorationInFrontPlayer")
         self.scene.add_sprite("Player", self.player)
@@ -235,6 +231,10 @@ class MyGame(arcade.Window):
         self.player.jump_boost_soda = 0
         self.player.on_ladder = False
         self.player.on_ground = False
+        self.player.air_time = 0
+        self.player.animation_frame = 0
+        self.player.jump_right_sprites = load_animation_sprite_sheet(path("skap_plattformer/assets/player/jump_right_sprite_sheet.png"), 35)
+
 
         grid_x = 3
         grid_y = 3
@@ -364,6 +364,8 @@ class MyGame(arcade.Window):
         # endregion
 
         # region Jump mechanics
+
+        # Do the jump
         if self.player.on_ground and not self.player.on_ladder:
             if self.player.newJump:
                 if self.up_pressed and not self.down_pressed:
@@ -373,6 +375,28 @@ class MyGame(arcade.Window):
                         self.physics_engine.apply_impulse(
                             self.player, [0, PLAYER_JUMP_FORCE + PLAYER_JUMP_SODA_BOOST * self.player.jump_boost_soda])
                         arcade.play_sound(self.jump_sound)
+
+        # Extending the jump
+        if not self.player.on_ground and not self.player.on_ladder:
+            self.player.air_time += 1
+
+            if self.up_pressed and not self.down_pressed and self.player.air_time < 8 and not self.player.newJump:
+                self.physics_engine.apply_force(self.player, (0, 3500))
+            if self.up_pressed and not self.down_pressed and self.player.air_time < 15 and not self.player.newJump:
+                self.physics_engine.apply_force(self.player, (0, 2500))
+
+            else:
+                self.player.air_time = 1000
+
+
+            if self.down_pressed and not self.up_pressed:
+                self.physics_engine.apply_force(self.player, (0, -5000))
+
+
+
+        else:
+            self.player.air_time = 0
+
 
         if not self.up_pressed:
             self.player.newJump = True
@@ -464,6 +488,15 @@ class MyGame(arcade.Window):
 
         # Move items in the physics engine
         self.physics_engine.step()
+
+        # region testAnimation
+
+        self.player.texture = arcade.load_texture(path("skap_plattformer/assets/player/jump_right_sprite_sheet.png"), 0, 0, 35, 51, hit_box_algorithm='Detailed')
+        self.player.animation_frame += 1
+        if self.player.animation_frame > 8:
+            self.player.animation_frame = 0
+
+        # endregion
 
     def on_draw(self):
         """ Draw everything """

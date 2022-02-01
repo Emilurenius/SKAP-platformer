@@ -340,6 +340,7 @@ class MyGame(arcade.Window):
             # Create a force to the left. Apply it.
             if self.player.on_ground:
                 force = (-PLAYER_MOVE_FORCE_ON_GROUND, 0)
+
             else:
                 force = (-PLAYER_MOVE_FORCE_IN_AIR, 0)
             self.physics_engine.apply_force(self.player, force)
@@ -371,7 +372,6 @@ class MyGame(arcade.Window):
                         self.physics_engine.apply_impulse(
                             self.player, [0, PLAYER_JUMP_FORCE + PLAYER_JUMP_SODA_BOOST * self.player.jump_boost_soda])
                         arcade.play_sound(self.jump_sound)
-                        self.player.set_velocity()
 
         # Extending the jump
         if not self.player.on_ground and not self.player.on_ladder:
@@ -488,10 +488,10 @@ class MyGame(arcade.Window):
 
         # region testAnimation
 
-        self.player.texture = arcade.load_texture(path("skap_plattformer/assets/player/jump_right_sprite_sheet.png"), 0, 0, 35, 51, hit_box_algorithm='Detailed')
         self.player.animation_frame += 1
         if self.player.animation_frame > 8:
             self.player.animation_frame = 0
+        self.player.texture = arcade.load_texture(path("skap_plattformer/assets/player/jump_right_sprite_sheet.png"), 35*self.player.animation_frame, 0, 35, 51, hit_box_algorithm='Detailed')
 
         # endregion
 

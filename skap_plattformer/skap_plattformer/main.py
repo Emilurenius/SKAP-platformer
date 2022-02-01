@@ -73,7 +73,7 @@ PLAYER_CLIMB_SPEED = 10
 
 
 def load_animation_sprite_sheet(file_path, split_width):
-    img = Image.open(r"E:\Documents\GitHub\SKAP-platformer\skap_plattformer\assets\player\jump_right_sprite_sheet.png")
+    img = Image.open(path('skap_plattformer/assets/player/jump_right_sprite_sheet.png'))
     width, height = img.size
     x = 0
     image_list = []
@@ -204,7 +204,6 @@ class MyGame(arcade.Window):
             self.scene.add_sprite_list("BackgroundTile")
 
 
-
         previous_layer = "BackgroundTile"
         for name in layers:
             if name not in self.scene.name_mapping:
@@ -221,7 +220,6 @@ class MyGame(arcade.Window):
         print(self.scene["Ground"].properties)
 
 
-
         # region Set up player
         image_source = path("skap_plattformer/assets/images/skapning-export.png")
         self.player = arcade.Sprite(image_source, 1, hit_box_algorithm='Simple')
@@ -235,7 +233,6 @@ class MyGame(arcade.Window):
         self.player.animation_frame = 0
         self.player.jump_right_sprites = load_animation_sprite_sheet(path("skap_plattformer/assets/player/jump_right_sprite_sheet.png"), 35)
 
-
         grid_x = 3
         grid_y = 3
         self.player.center_x = SPRITE_SIZE * grid_x + SPRITE_SIZE / 2
@@ -243,8 +240,8 @@ class MyGame(arcade.Window):
         # Add to player sprite list
         self.player_list.append(self.player)
 
-        #image_source = load_animation_sprite_sheet(path("assets/items/Leapy_Lime.png"), 9)
-        #self.scene.add_sprite("Item", arcade.Sprite(image_source[0], hit_box_algorithm='Simple'))
+        # image_source = load_animation_sprite_sheet(path("assets/items/Leapy_Lime.png"), 9)
+        # self.scene.add_sprite("Item", arcade.Sprite(image_source[0], hit_box_algorithm='Simple'))
 
         # --- Pymunk Physics Engine Setup ---
 
@@ -290,7 +287,6 @@ class MyGame(arcade.Window):
         # repositioned by code and don't respond to physics forces.
         # Dynamic is default.
         print(self.scene["Ground"].properties)
-
 
         self.physics_engine.add_sprite_list(self.scene["Ground"],
                                             friction=self.scene["Ground"].properties["friction"],
@@ -375,6 +371,7 @@ class MyGame(arcade.Window):
                         self.physics_engine.apply_impulse(
                             self.player, [0, PLAYER_JUMP_FORCE + PLAYER_JUMP_SODA_BOOST * self.player.jump_boost_soda])
                         arcade.play_sound(self.jump_sound)
+                        self.player.set_velocity()
 
         # Extending the jump
         if not self.player.on_ground and not self.player.on_ladder:

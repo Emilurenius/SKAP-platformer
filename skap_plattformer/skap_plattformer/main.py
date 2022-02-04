@@ -61,34 +61,15 @@ DYNAMIC_ITEM_FRICTION = 0.6
 PLAYER_MASS = 2.0
 
 # Player constants
-PLAYER_MAX_HORIZONTAL_SPEED = 450
+PLAYER_MAX_HORIZONTAL_SPEED = 520
 PLAYER_MAX_VERTICAL_SPEED = 1600
 PLAYER_MAX_CLIMB_SPEED = 300
-PLAYER_MOVE_FORCE_ON_GROUND = 8000
+PLAYER_MOVE_FORCE_ON_GROUND = 8500
 PLAYER_MOVE_FORCE_IN_AIR = 3000
 PLAYER_CLIMB_FORCE = 2000
-PLAYER_JUMP_FORCE = 1500
-PLAYER_JUMP_SODA_BOOST = 150
+PLAYER_JUMP_FORCE = 1400
+PLAYER_JUMP_SODA_BOOST = 250
 PLAYER_CLIMB_SPEED = 10
-
-
-def load_animation_sprite_sheet(file_path, split_width):
-    img = Image.open(path('skap_plattformer/assets/player/jump_right_sprite_sheet.png'))
-    width, height = img.size
-    x = 0
-    image_list = []
-
-    while x*split_width < width:
-
-        left = x*split_width # 0 * 9
-        top = 0
-        right = split_width-1 + x*split_width # 8
-        bottom = height # 15
-        image_list.append(img.crop((left, top, right, bottom)))
-
-        x += 1
-    return image_list
-
 
 class MyGame(arcade.Window):
     """ Main Window """
@@ -164,26 +145,15 @@ class MyGame(arcade.Window):
 
         # endregion
 
-    def on_resize(self, width, height):
-        """ This method is automatically called when the window is resized. """
-
-        # Call the parent. Failing to do this will mess up the coordinates,
-        # and default to 0,0 at the center and the edges being -1 to 1.
-        super().on_resize(width, height)
-        self.screen_width = width
-        self.screen_height = height
-        self.player_camera.resize(width, height)
-        self.gui_camera.resize(width, height)
-        print(f"Window resized to: {width}, {height}")
-
-
     def setup(self):
         """ Set up everything with the game """
 
-        # Create Camera
+        # region Camera
         self.player_camera = arcade.Camera(self.screen_width, self.screen_height)
         self.gui_camera = arcade.Camera(self.screen_width, self.screen_height)
+        # endregion
 
+        # region Map
         # Map name
         map_name = "skap_plattformer/assets/levels/secretTestLevel.tmx"
 
@@ -218,12 +188,15 @@ class MyGame(arcade.Window):
                 print(f"Added {layer.properties} to {layer.name}")
 
         print(self.scene["Ground"].properties)
+        # endregion
 
-
-        # region Set up player
+        # region Player
         image_source = path("skap_plattformer/assets/images/skapning-export.png")
         self.player = arcade.Sprite(image_source, 1, hit_box_algorithm='Simple')
-        self.scene.add_sprite_list_before("Player", "DecorationInFrontPlayer")
+
+        if "Player" not in self.scene.name_mapping:
+            self.scene.add_sprite_list_before("Player", "DecorationInFrontPlayer")
+
         self.scene.add_sprite("Player", self.player)
         self.player.newJump = True
         self.player.jump_boost_soda = 0
@@ -231,45 +204,26 @@ class MyGame(arcade.Window):
         self.player.on_ground = False
         self.player.air_time = 0
         self.player.animation_frame = 0
-        self.player.jump_right_sprites = load_animation_sprite_sheet(path("skap_plattformer/assets/player/jump_right_sprite_sheet.png"), 35)
+        self.player.jump_right_sprites = self.load_animation_sprite_sheet("jump_right",path("skap_plattformer/assets/player/jump_right_sprite_sheet.png"), 35)
 
         grid_x = 3
         grid_y = 3
         self.player.center_x = SPRITE_SIZE * grid_x + SPRITE_SIZE / 2
         self.player.center_y = SPRITE_SIZE * grid_y + SPRITE_SIZE / 2
-        # Add to player sprite list
-        self.player_list.append(self.player)
 
-        # image_source = load_animation_sprite_sheet(path("assets/items/Leapy_Lime.png"), 9)
-        # self.scene.add_sprite("Item", arcade.Sprite(image_source[0], hit_box_algorithm='Simple'))
+        # endregion
 
-        # --- Pymunk Physics Engine Setup ---
-
-        # The default damping for every object controls the percent of velocity
-        # the object will keep each second. A value of 1.0 is no speed loss,
-        # 0.9 is 10% per second, 0.1 is 90% per second.
-        # For top-down games, this is basically the friction for moving objects.
-        # For platformers with gravity, this should probably be set to 1.0.
-        # Default value is 1.0 if not specified.
+        # Damping means the fraction of speed that you still have after 1 second.
         self.damping = DEFAULT_DAMPING
 
         # Set the gravity. (0, 0) is good for outer space and top-down.
         self.gravity = (0, -GRAVITY)
 
-        # Create the physics engine
+        # region The physics engine
         self.physics_engine = arcade.PymunkPhysicsEngine(damping=self.damping,
                                                          gravity=self.gravity)
 
         # Add the player.
-        # For the player, we set the damping to a lower value, which increases
-        # the damping rate. This prevents the character from traveling too far
-        # after the player lets off the movement keys.
-        # Setting the moment to PymunkPhysicsEngine.MOMENT_INF prevents it from
-        # rotating.
-        # Friction normally goes between 0 (no friction) and 1.0 (high friction)
-        # Friction is between two objects in contact. It is important to remember
-        # in top-down games that friction moving along the 'floor' is controlled
-        # by damping.
         self.physics_engine.add_sprite(self.player,
                                        damping=PLAYER_DAMPING,
                                        friction=PLAYER_FRICTION,
@@ -277,58 +231,29 @@ class MyGame(arcade.Window):
                                        moment=arcade.PymunkPhysicsEngine.MOMENT_INF,
                                        collision_type="player",
                                        max_horizontal_velocity=PLAYER_MAX_HORIZONTAL_SPEED,
-                                       max_vertical_velocity=PLAYER_MAX_VERTICAL_SPEED)
+                                       max_vertical_velocity=PLAYER_MAX_VERTICAL_SPEED),
 
-        # Create the walls.
-        # By setting the body type to PymunkPhysicsEngine.STATIC the walls can't
-        # move.
-        # Movable objects that respond to forces are PymunkPhysicsEngine.DYNAMIC
-        # PymunkPhysicsEngine.KINEMATIC objects will move, but are assumed to be
-        # repositioned by code and don't respond to physics forces.
-        # Dynamic is default.
+        # STATIC means cant move, DYNAMIC can move, KINEMATIC means can move, but has to be coded in.
         print(self.scene["Ground"].properties)
 
-        self.physics_engine.add_sprite_list(self.scene["Ground"],
-                                            friction=self.scene["Ground"].properties["friction"],
-                                            collision_type="wall",
-                                            body_type=arcade.PymunkPhysicsEngine.STATIC)
+        # Add the ground spritelists
+        for name in self.scene.name_mapping:
+            hit_sprite_list = self.scene.get_sprite_list(name)
+            if hit_sprite_list.properties['collision_type'] == "wall":
+                self.physics_engine.add_sprite_list(self.scene[name],
+                                                    friction=self.scene[name].properties["friction"],
+                                                    collision_type="wall",
+                                                    body_type=arcade.PymunkPhysicsEngine.STATIC)
 
-        self.physics_engine.add_sprite_list(self.scene["Ice"],
-                                            friction=self.scene["Ice"].properties["friction"],
-                                            collision_type="wall",
-                                            body_type=arcade.PymunkPhysicsEngine.STATIC)
-
-        # Create the items
+        # Add the items
         self.physics_engine.add_sprite_list(self.scene["Item"],
                                             friction=DYNAMIC_ITEM_FRICTION,
                                             mass = 0.75,
                                             collision_type="item")
+        # endregion
 
-    def on_key_press(self, key, modifiers):
-        """Called whenever a key is pressed. """
-
-        if key == arcade.key.LEFT or key == arcade.key.A:
-            self.left_pressed = True
-        elif key == arcade.key.RIGHT or key == arcade.key.D:
-            self.right_pressed = True
-        elif key == arcade.key.UP or key == arcade.key.W:
-            self.up_pressed = True
-        elif key == arcade.key.DOWN or key == arcade.key.S:
-            self.down_pressed = True
-        elif key == arcade.key.ESCAPE:
-            self.setup()
-
-    def on_key_release(self, key, modifiers):
-        """Called when the user releases a key. """
-
-        if key == arcade.key.LEFT or key == arcade.key.A:
-            self.left_pressed = False
-        elif key == arcade.key.RIGHT or key == arcade.key.D:
-            self.right_pressed = False
-        elif key == arcade.key.UP or key == arcade.key.W:
-            self.up_pressed = False
-        elif key == arcade.key.DOWN or key == arcade.key.S:
-            self.down_pressed = False
+    def load_level(self):
+        pass
 
     def on_update(self, delta_time):
         """ Movement and game logic """
@@ -378,10 +303,10 @@ class MyGame(arcade.Window):
         if not self.player.on_ground and not self.player.on_ladder:
             self.player.air_time += 1
 
-            if self.up_pressed and not self.down_pressed and self.player.air_time < 8 and not self.player.newJump:
-                self.physics_engine.apply_force(self.player, (0, 3500))
-            if self.up_pressed and not self.down_pressed and self.player.air_time < 15 and not self.player.newJump:
-                self.physics_engine.apply_force(self.player, (0, 2500))
+            if self.up_pressed and not self.down_pressed and self.player.air_time < 11 and not self.player.newJump:
+                self.physics_engine.apply_force(self.player, (0, 3500+self.player.jump_boost_soda * PLAYER_JUMP_SODA_BOOST))
+            if self.up_pressed and not self.down_pressed and self.player.air_time < 17 and not self.player.newJump:
+                self.physics_engine.apply_force(self.player, (0, 2500+self.player.jump_boost_soda * PLAYER_JUMP_SODA_BOOST))
 
             else:
                 self.player.air_time = 1000
@@ -438,22 +363,16 @@ class MyGame(arcade.Window):
         # endregion
 
         # region Collision Detection
+        for name in self.scene.name_mapping:
+            hit_sprite_list = self.scene.get_sprite_list(name)
+            if hit_sprite_list.properties['collision_type'] == "pick_up":
+                hit_list = arcade.check_for_collision_with_list(self.player, self.scene[name])
 
-        # region Coins
-        coin_hit_list = arcade.check_for_collision_with_list(
-            self.player, self.scene["Coin"]
-        )
-        # Loop through each coin we hit (if any) and remove it
-        for coin in coin_hit_list:
-            # Remove the coin
-            coin.remove_from_sprite_lists()
-            # Play a sound
-            arcade.play_sound(self.collect_coin_sound)
-            # Add one to the score
-            self.score += coin.properties["coin_value"]
-
-        # Ladder
-        # endregion
+                for item in hit_list:
+                    item.remove_from_sprite_lists()
+                    #arcade.play_sound()
+                    run_pick_up = getattr(self, item.properties['on_pick_up'])
+                    run_pick_up(item)
 
         # region Ladders
         ladder_hit_list = arcade.check_for_collision_with_list(self.player, self.scene["Ladder"])
@@ -535,6 +454,7 @@ class MyGame(arcade.Window):
             18
         )
 
+    # region Misc specific functions
     def center_camera_on_player(self):
         screen_center_x = self.player.center_x - (self.screen_width / 2)
         screen_center_y = self.player.center_y - (self.screen_height / 2)
@@ -548,6 +468,77 @@ class MyGame(arcade.Window):
         player_centered = screen_center_x, screen_center_y
 
         self.player_camera.move_to(player_centered)
+
+    # region functions for items that can be picked up
+    def mushroom(self, item):
+        print("IT WOOOOOOOOOOOOOOOOOOOOORKS")
+        print("A mushroom was picked up")
+
+    def coin(self, coin):
+        print(f"A coin worth {int(coin.properties['coin_value'])} was picked up")
+        arcade.play_sound(self.collect_coin_sound)
+        self.score += coin.properties['coin_value']
+
+    def leapy_lime(self, item):
+        print("A Leapy Lime was picked up")
+        print("*energy-drink-noises*")
+        self.player.jump_boost_soda += 1
+    # endregion
+
+    def on_resize(self, width, height):
+        """ This method is automatically called when the window is resized. """
+
+        # Call the parent. Failing to do this will mess up the coordinates,
+        # and default to 0,0 at the center and the edges being -1 to 1.
+        super().on_resize(width, height)
+        self.screen_width = width
+        self.screen_height = height
+        self.player_camera.resize(width, height)
+        self.gui_camera.resize(width, height)
+        print(f"Window resized to: {width}, {height}")
+
+    def on_key_press(self, key, modifiers):
+        """Called whenever a key is pressed. """
+
+        if key == arcade.key.LEFT or key == arcade.key.A:
+            self.left_pressed = True
+        elif key == arcade.key.RIGHT or key == arcade.key.D:
+            self.right_pressed = True
+        elif key == arcade.key.UP or key == arcade.key.W:
+            self.up_pressed = True
+        elif key == arcade.key.DOWN or key == arcade.key.S:
+            self.down_pressed = True
+        elif key == arcade.key.ESCAPE:
+            self.setup()
+
+    def on_key_release(self, key, modifiers):
+        """Called when the user releases a key. """
+
+        if key == arcade.key.LEFT or key == arcade.key.A:
+            self.left_pressed = False
+        elif key == arcade.key.RIGHT or key == arcade.key.D:
+            self.right_pressed = False
+        elif key == arcade.key.UP or key == arcade.key.W:
+            self.up_pressed = False
+        elif key == arcade.key.DOWN or key == arcade.key.S:
+            self.down_pressed = False
+
+    def load_animation_sprite_sheet(self, name, file_path, split_width):
+        img = Image.open(file_path)
+        width, height = img.size
+        x = 0
+        image_list = []
+
+        while x * split_width < width:
+            left = x * split_width  # 0 * 9
+            top = 0
+            right = split_width - 1 + x * split_width  # 8
+            bottom = height  # 15
+            image_list.append(arcade.Texture(f"{name}{x}", img.crop((left, top, right, bottom))))
+
+            x += 1
+        return image_list
+    # endregion
 
 
 def main():

@@ -1,7 +1,7 @@
 # Skap platforming game
 
 # importing modules and libraries as needed
-import arcade, os, json
+import arcadeaaa, os, json
 from PIL import Image
 
 
@@ -448,10 +448,7 @@ class MyGame(arcade.Window):
 
 
 
-        if self.right_pressed and self.left_pressed:
-            self.player.texture = arcade.load_texture(
-                path("skap_plattformer/assets/player/jump_right_sprite_sheet.png"), 35 * self.player.animation_frame, 0, 35, 51, hit_box_algorithm='Detailed')
-            print("Setting texture")
+        
 
         if False:
             if self.player.animation_frame > 8:

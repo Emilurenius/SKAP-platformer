@@ -1,7 +1,7 @@
 # Skap platforming game
 
 # importing modules and libraries as needed
-import arcade, os, json
+import arcade, pygame, os, json
 from PIL import Image
 
 

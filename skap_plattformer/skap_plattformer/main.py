@@ -448,7 +448,6 @@ class MyGame(arcade.Window):
 
 
 
-        
 
         if False:
             if self.player.animation_frame > 8:

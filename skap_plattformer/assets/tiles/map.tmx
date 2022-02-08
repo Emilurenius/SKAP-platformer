@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="128" height="100" tilewidth="32" tileheight="32" infinite="1" nextlayerid="7" nextobjectid="1">
+ <tileset firstgid="1" source="tileset.tsx"/>
+ <layer id="1" name="Tile Layer 1" width="128" height="100" offsetx="0" offsety="-8">
+  <data encoding="base64" compression="zlib">
+   <chunk x="0" y="-16" width="16" height="16">
+   eJxjYBgFo2AUDFXADMQsUJoViBmhNEycEUqDxJiQ5GE0AAsIADU=
+  </chunk>
+  </data>
+ </layer>
+ <imagelayer id="2" name="grass 3" offsetx="32" offsety="-65">
+  <image source="grass3.png" width="32" height="32"/>
+ </imagelayer>
+ <imagelayer id="5" name="Copy of grass 3" offsetx="198" offsety="-65">
+  <image source="grass3.png" width="32" height="32"/>
+ </imagelayer>
+ <imagelayer id="6" name="Image Layer 5"/>
+ <imagelayer id="3" name="grass 2" offsetx="161" offsety="-64">
+  <image source="grass2.png" width="32" height="32"/>
+ </imagelayer>
+ <imagelayer id="4" name="Copy of grass 2" offsetx="265" offsety="-65">
+  <image source="grass2.png" width="32" height="32"/>
+ </imagelayer>
+</map>

@@ -24,7 +24,7 @@ SPRITE_SCALING_PLAYER = 0.5
 SPRITE_SCALING_TILES = 0.5
 
 # Scaled sprite size for tiles
-SPRITE_SIZE = int(GRID_PIXEL_SIZE * SPRITE_SCALING_PLAYER)
+SPRITE_SIZE = int(GRID_PIXEL_SIZE*0.4)
 
 # Size of grid to show on screen, in number of tiles
 SCREEN_GRID_WIDTH = 25
@@ -204,7 +204,9 @@ class MyGame(arcade.Window):
         self.player.on_ground = False
         self.player.air_time = 0
         self.player.animation_frame = 0
-        self.player.jump_right_sprites = self.load_animation_sprite_sheet("jump_right",path("skap_plattformer/assets/player/jump_right_sprite_sheet.png"), 35)
+        self.player.jump_right_sprites = self.load_animation_sprite_sheet("jump_right", path("skap_plattformer/assets/player/jump_right_sprite_sheet.png"), 35)
+        print(len(self.player.jump_right_sprites))
+        self.player.texture = self.player.jump_right_sprites[7]
 
         grid_x = 3
         grid_y = 3
@@ -403,17 +405,67 @@ class MyGame(arcade.Window):
         # Move the camera
         self.center_camera_on_player()
 
+        # region Animation
+
+        if not self.player.on_ground and not self.player.on_ladder:
+
+            print(self.physics_engine.get_physics_object(self.player).body.velocity.y)
+            if self.physics_engine.get_physics_object(self.player).body.velocity.y > 500:
+                self.player.texture = self.player.jump_right_sprites[0]
+
+            elif self.physics_engine.get_physics_object(self.player).body.velocity.y > 400:
+                self.player.texture = self.player.jump_right_sprites[1]
+
+            elif self.physics_engine.get_physics_object(self.player).body.velocity.y > 200:
+                self.player.texture = self.player.jump_right_sprites[2]
+
+            elif self.physics_engine.get_physics_object(self.player).body.velocity.y > 50:
+                self.player.texture = self.player.jump_right_sprites[3]
+
+            elif self.physics_engine.get_physics_object(self.player).body.velocity.y > -100:
+                self.player.texture = self.player.jump_right_sprites[4]
+
+            elif self.physics_engine.get_physics_object(self.player).body.velocity.y > -300:
+                self.player.texture = self.player.jump_right_sprites[5]
+
+            elif self.physics_engine.get_physics_object(self.player).body.velocity.y > -400:
+                self.player.texture = self.player.jump_right_sprites[6]
+
+            elif self.physics_engine.get_physics_object(self.player).body.velocity.y > -500:
+                self.player.texture = self.player.jump_right_sprites[7]
+
+            elif self.physics_engine.get_physics_object(self.player).body.velocity.y > -600:
+                self.player.texture = self.player.jump_right_sprites[8]
+
+            elif self.physics_engine.get_physics_object(self.player).body.velocity.y > -700:
+                self.player.texture = self.player.jump_right_sprites[9]
+
+            elif self.physics_engine.get_physics_object(self.player).body.velocity.y > -800:
+                self.player.texture = self.player.jump_right_sprites[10]
+
+            else:
+                self.player.texture = self.player.jump_right_sprites[11]
+
+
+
+        if self.right_pressed and self.left_pressed:
+            self.player.texture = arcade.load_texture(
+                path("skap_plattformer/assets/player/jump_right_sprite_sheet.png"), 35 * self.player.animation_frame, 0, 35, 51, hit_box_algorithm='Detailed')
+            print("Setting texture")
+
+        if False:
+            if self.player.animation_frame > 8:
+                self.player.animation_frame = 0
+            self.player.texture = arcade.load_texture(path("skap_plattformer/assets/player/jump_right_sprite_sheet.png"),
+                                                      35 * self.player.animation_frame, 0, 35, 51,
+                                                      hit_box_algorithm='Detailed')
+
+        # endregion
+
         # Move items in the physics engine
         self.physics_engine.step()
 
-        # region testAnimation
 
-        # self.player.animation_frame += 1
-        if self.player.animation_frame > 8:
-            self.player.animation_frame = 0
-        self.player.texture = arcade.load_texture(path("skap_plattformer/assets/player/jump_right_sprite_sheet.png"), 35*self.player.animation_frame, 0, 35, 51, hit_box_algorithm='Detailed')
-
-        # endregion
 
     def on_draw(self):
         """ Draw everything """
@@ -424,7 +476,7 @@ class MyGame(arcade.Window):
 
         # Draw the level
         self.scene.draw()
-        self.scene.draw_hit_boxes()
+        #self.scene.draw_hit_boxes()
 
         # Draw the gui
         self.gui_camera.use()
@@ -527,16 +579,19 @@ class MyGame(arcade.Window):
         img = Image.open(file_path)
         width, height = img.size
         x = 0
+        print(f"{width}, {split_width}")
         image_list = []
 
         while x * split_width < width:
+
             left = x * split_width  # 0 * 9
             top = 0
-            right = split_width - 1 + x * split_width  # 8
-            bottom = height  # 15
-            image_list.append(arcade.Texture(f"{name}{x}", img.crop((left, top, right, bottom))))
+            sprite_width = split_width # 8
+
+            image_list.insert(x, arcade.load_texture(file_path, left, top, sprite_width, height))
 
             x += 1
+
         return image_list
     # endregion
 

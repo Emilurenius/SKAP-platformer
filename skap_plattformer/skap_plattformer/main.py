@@ -5,52 +5,14 @@ import arcade, os, json
 from PIL import Image
 
 
-#More convenient way to find files
-def path(path):
-    return os.path.realpath(f"{__file__}/../../{path}")
-
-# Initialize constant variables
-SCREEN_WIDTH = 1800
-SCREEN_HEIGHT = 880
-SCREEN_TITLE = "Skap plattformer"
-GRAVITY = 1
-
-# Player start position
-PLAYER_START_Y = 100
-PLAYER_START_X = 100
-
-#Pixels per frame
-PLAYER_WALK_SPEED = 8
-PLAYER_CLIMB_SPEED = 4
-PLAYER_JUMP_SPEED = 15
-PLAYER_COMBO_JUMP_BOOST = 2
-PLAYER_COMBO_JUMP_TIMER = 7
-PLAYER_MAX_JUMP_COMBO = 2
-
-# Pixels per frame per frame
-PLAYER_WALK_ACCELERATION = 1
-PLAYER_SLOW_DOWN = 1
-
-JUMP_DIFFICULTY = 1
-
-# Placement of GUI
-
-# Scoreboard
-SCORE_FROM_TOP = 25
-SCORE_FROM_LEFT = 10
-
-# Timer
-TIMER_FROM_TOP = 25
-TIMER_FROM_RIGHT = 41
+# More convenient way to find files
+def path(file_address):
+    return os.path.realpath(f"{__file__}/../../../{file_address}")
 
 
-# region sprite scaling
-CHARACTER_SCALING = 1
-TILE_SCALING = 0.5
-COIN_SCALING = 0.5
-SPRITE_PIXEL_SIZE = 256
-GRID_PIXEL_SIZE = SPRITE_PIXEL_SIZE * TILE_SCALING
-# endregion
+"""
+Example of Pymunk Physics Engine Platformer
+"""
 
 SCREEN_TITLE = "PyMunk Platformer"
 
@@ -186,13 +148,14 @@ class MyGame(arcade.Window):
     def setup(self):
         """ Set up everything with the game """
 
-        # Create the camera
+        # region Camera
         self.player_camera = arcade.Camera(self.screen_width, self.screen_height)
         self.gui_camera = arcade.Camera(self.screen_width, self.screen_height)
+        # endregion
 
         # region Map
-        #Name of map file to load
-        map_name = path("assets/levels/secretTestLevel.tmx")
+        # Map name
+        map_name = "skap_plattformer/assets/levels/secretTestLevel.tmx"
 
         # Load in TileMap
         self.tile_map = arcade.load_tilemap(path(map_name), SPRITE_SCALING_TILES)

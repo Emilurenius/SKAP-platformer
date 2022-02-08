@@ -169,7 +169,7 @@ class MyGame(arcade.Window):
 
         # draw sprites
         self.scene.draw()
-        self.scene.draw_hit_boxes()
+        # self.scene.draw_hit_boxes()
         # Draw GUI
         self.GUI_camera.use()
 
@@ -185,7 +185,7 @@ class MyGame(arcade.Window):
         # Draw the timer
         arcade.draw_text (
             self.clock_text,
-            SCREEN_WIDTH - self.real_timer_from_right,
+            SCREEN_WIDTH - self.real_timer_from_right - 4,
             SCREEN_HEIGHT - TIMER_FROM_TOP,
             WHITE,
             18

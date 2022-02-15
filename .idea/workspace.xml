@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="5264d785-f703-4944-af61-b9bd6bbbda8c" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/skap_plattformer/skap_plattformer/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/skap_plattformer/skap_plattformer/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -102,6 +103,7 @@
       <workItem from="1643706169796" duration="4005000" />
       <workItem from="1644321952176" duration="1778000" />
       <workItem from="1644324377556" duration="2091000" />
+      <workItem from="1644916804500" duration="1100000" />
     </task>
     <servers />
   </component>
@@ -109,7 +111,7 @@
     <option name="version" value="3" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/SKAP_platformer$main.coverage" NAME="main Coverage Results" MODIFIED="1644326153913" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/skap_plattformer/skap_plattformer" />
+    <SUITE FILE_PATH="coverage/SKAP_platformer$main.coverage" NAME="main Coverage Results" MODIFIED="1644917736418" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/skap_plattformer/skap_plattformer" />
     <SUITE FILE_PATH="coverage/SKAP_platformer$Unnamed.coverage" NAME="Unnamed Coverage Results" MODIFIED="1643113311480" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="" />
   </component>
 </project>

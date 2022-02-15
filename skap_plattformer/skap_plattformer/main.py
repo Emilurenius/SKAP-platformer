@@ -191,7 +191,7 @@ class MyGame(arcade.Window):
         # endregion
 
         # region Player
-        image_source = path("skap_plattformer/assets/images/skapning-export.png")
+        image_source = path("skap_plattformer/assets/player/player_right.png")
         self.player = arcade.Sprite(image_source, 1, hit_box_algorithm='Simple')
 
         if "Player" not in self.scene.name_mapping:
@@ -447,8 +447,6 @@ class MyGame(arcade.Window):
                 self.player.texture = self.player.jump_right_sprites[11]
 
 
-
-
         if False:
             if self.player.animation_frame > 8:
                 self.player.animation_frame = 0
@@ -461,8 +459,6 @@ class MyGame(arcade.Window):
         # Move items in the physics engine
         self.physics_engine.step()
 
-
-
     def on_draw(self):
         """ Draw everything """
         arcade.start_render()
@@ -472,7 +468,7 @@ class MyGame(arcade.Window):
 
         # Draw the level
         self.scene.draw()
-        #self.scene.draw_hit_boxes()
+        self.scene.draw_hit_boxes()
 
         # Draw the gui
         self.gui_camera.use()

@@ -48,7 +48,7 @@ WHITE = arcade.color.WHITE
 # Gravity
 GRAVITY = 2500
 
-# Damping - Amount of speed lost per second
+# Damping - Amount of speed retained per second
 DEFAULT_DAMPING = 1.0
 PLAYER_DAMPING = 0.3
 
@@ -208,6 +208,8 @@ class MyGame(arcade.Window):
         print(len(self.player.jump_right_sprites))
         self.player.texture = self.player.jump_right_sprites[7]
 
+        self.player.hit_box = ((-14.5, -20.0), (-11.5, -25.0), (7.5, -25.0), (8.5, -20.0), (8.5, 18.0), (4.5, 22.0), (-2.5, 22.0), (-14.5, 10.0))
+        print(self.player.hit_box)
         grid_x = 3
         grid_y = 3
         self.player.center_x = SPRITE_SIZE * grid_x + SPRITE_SIZE / 2

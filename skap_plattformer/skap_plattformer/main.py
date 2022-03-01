@@ -270,7 +270,7 @@ class MyGame(arcade.Window):
             if self.player.on_ground:
                 force = (-PLAYER_MOVE_FORCE_ON_GROUND, 0)
 
-            else:
+            else: # Bole er bøg
                 force = (-PLAYER_MOVE_FORCE_IN_AIR, 0)
             self.physics_engine.apply_force(self.player, force)
             # Set friction to zero for the player while moving

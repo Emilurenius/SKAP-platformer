@@ -154,7 +154,6 @@ class MyGame(arcade.Window):
         # endregion
 
         # region Map
-        # Map name
         map_name = "skap_plattformer/assets/levels/secretTestLevel.tmx"
 
         # Load in TileMap
@@ -167,6 +166,8 @@ class MyGame(arcade.Window):
         # Create the missing sprite lists
         self.player_list = arcade.SpriteList()
         self.bullet_list = arcade.SpriteList()
+        print('\nSprite list:')
+        print(arcade.SpriteList())
 
         layers = ["BackgroundTile", "Ground", "Ice", "Ladder", "DecorationBehindPlayer", "Player", "DynamicItem",
                   "Item", "Coin", "Platform", "DecorationInFrontPlayer"]
@@ -224,8 +225,7 @@ class MyGame(arcade.Window):
         self.gravity = (0, -GRAVITY)
 
         # region The physics engine
-        self.physics_engine = arcade.PymunkPhysicsEngine(damping=self.damping,
-                                                         gravity=self.gravity)
+        self.physics_engine = arcade.PymunkPhysicsEngine(damping=self.damping, gravity=self.gravity)
 
         # Add the player.
         self.physics_engine.add_sprite(self.player,

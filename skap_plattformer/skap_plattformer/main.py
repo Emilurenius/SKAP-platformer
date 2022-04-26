@@ -103,7 +103,7 @@ class MyGame(arcade.Window):
         self.right_pressed = False
         self.up_pressed = False
         self.down_pressed = False
-        self.followPlayer = False
+        self.followPlayer = True
 
     def setup(self):
         # Game setup happens here, and calling this function should restart the game
@@ -143,7 +143,7 @@ class MyGame(arcade.Window):
         self.player.floaty_jump_timer = 0
         self.player.on_ladder = False
         self.player.on_ground = False
-        self.followPlayer = False
+        self.followPlayer = True
         
         # Place the player
         self.player.center_x = PLAYER_START_X
@@ -153,9 +153,14 @@ class MyGame(arcade.Window):
         self.scene.add_sprite("Player", self.player)
         # endregion
 
+        #region enemy
+        self.enemy = arcade.Sprite(image_source, CHARACTER_SCALING, hit_box_algorithm='Simple')
+        self.scene.add_sprite('Enemy', self.player)
+        #endregion
+
         # Create physics engine
         self.physics_engine = arcade.PhysicsEnginePlatformer(
-            player_sprite = self.player, gravity_constant = 0, walls = [self.scene["Ground"], self.scene["Ice"]]
+            player_sprite = self.player, gravity_constant = walls = [self.scene["Ground"], self.scene["Ice"]]
         )
         self.friction = 1
 

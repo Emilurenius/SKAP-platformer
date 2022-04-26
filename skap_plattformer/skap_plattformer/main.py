@@ -331,9 +331,15 @@ class MyGame(arcade.Window):
 
         if self.playerAnimation == 'left':
             if self.playerAnimationFrame > 35:
-                print('resetting position')
                 self.playerAnimationFrame = 0
             self.player.texture = arcade.load_texture(path("assets/images/Players/walking_60frames.png"),
+                                                      31 * self.playerAnimationFrame, 0, 31, 47,
+                                                      hit_box_algorithm='Detailed')
+            self.playerAnimationFrame += 1
+        elif self.playerAnimation == 'right':
+            if self.playerAnimationFrame > 35:
+                self.playerAnimationFrame = 0
+            self.player.texture = arcade.load_texture(path("assets/images/Players/walking_right_60frames.png"),
                                                       31 * self.playerAnimationFrame, 0, 31, 47,
                                                       hit_box_algorithm='Detailed')
             self.playerAnimationFrame += 1

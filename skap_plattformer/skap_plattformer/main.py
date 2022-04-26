@@ -135,7 +135,7 @@ class MyGame(arcade.Window):
         self.score = 0
 
         # region Set up player
-        image_source = path("assets/images/Players/stand_still.png")
+        image_source = path("assets/images/Players/soup-still.png")
         self.player = arcade.Sprite(image_source, CHARACTER_SCALING, hit_box_algorithm='Simple')
         self.player.newJump = True
 
@@ -144,6 +144,7 @@ class MyGame(arcade.Window):
         self.player.on_ladder = False
         self.player.on_ground = False
         self.followPlayer = True
+        self.playerAnimation = 'idle' # can have values 'left' 'right' 'jump' and 'idle'
         
         # Place the player
         self.player.center_x = PLAYER_START_X
@@ -278,6 +279,7 @@ class MyGame(arcade.Window):
         # region Walking mechanics
         # Walk Left
         if self.left_pressed and not self.right_pressed:
+            self.playerAnimation = 'left'
             if self.player.change_x != -PLAYER_WALK_SPEED:
                 if self.player.change_x > -PLAYER_WALK_SPEED+PLAYER_WALK_ACCELERATION:
                     self.player.change_x -= PLAYER_WALK_ACCELERATION
@@ -286,6 +288,7 @@ class MyGame(arcade.Window):
 
         # Walk Right
         elif self.right_pressed and not self.left_pressed:
+            self.playerAnimation = 'right'
             if self.player.change_x != PLAYER_WALK_SPEED:
                 if self.player.change_x < PLAYER_WALK_SPEED-PLAYER_WALK_ACCELERATION:
                     self.player.change_x += PLAYER_WALK_ACCELERATION
@@ -294,7 +297,7 @@ class MyGame(arcade.Window):
 
         # No walk
         if not self.right_pressed and not self.left_pressed or self.right_pressed and self.left_pressed:
-            
+            self.playerAnimation = 'idle'
             ground_hit_list = arcade.get_sprites_at_point(
                 [self.player.center_x, self.player.bottom-5], self.scene["Ground"]
             )

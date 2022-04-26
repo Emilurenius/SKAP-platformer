@@ -153,6 +153,7 @@ class MyGame(arcade.Window):
         self.player.center_y = PLAYER_START_Y
         
         # Add the player to the spritelist
+        self.scene["Player"].clear()
         self.scene.add_sprite("Player", self.player)
         # endregion
 

@@ -151,7 +151,8 @@ class MyGame(arcade.Window):
         self.player.center_y = PLAYER_START_Y
         
         # Add the player to the spritelist
-        self.scene.add_sprite("Player", self.player)
+        self.scene.add_sprite_list_after("Player", "DecorationInFrontPlayer")
+        self.scene["Player"].insert(0, self.player)
         # endregion
 
         #region enemy
@@ -346,9 +347,14 @@ class MyGame(arcade.Window):
             self.player, self.scene["Ladder"]
         )
 
-        # Coins
+        # Goal
         goal_hit_list = arcade.check_for_collision_with_list(
             self.player, self.scene["Goal"]
+        )
+
+        # Collectibles
+        collectible_hit_list = arcade.check_for_collision_with_list(
+            self.player, self.scene["Collectibles"]
         )
 
         if ladder_hit_list:
@@ -371,6 +377,11 @@ class MyGame(arcade.Window):
             arcade.play_sound(self.land_sound)
             # Add one to the score
             self.score += coin.properties["coin_value"]
+
+        # Loop through collectibles hit.
+        for collectible in collectible_hit_list:
+            collectible.remove_from_sprite_lists()
+            self.item_pickup(collectible.properties["item"])
 
         self.score_text = f"Score: {int(self.score)}, there are {len(self.scene['Coins'])} remaining"
         

@@ -131,8 +131,8 @@ class MyGame(arcade.Window):
         # from the map as SpriteLists in the scene in the proper order.
         self.scene = arcade.Scene.from_tilemap(self.tile_map)
         self.end_of_map = self.tile_map.width * GRID_PIXEL_SIZE
-        self.scene["InvisibleWalls"].visible = False
         self.score = 0
+        self.scene["InvisibleWalls"].visible = False
 
         # region Set up player
         image_source = path("assets/images/Players/stand_still.png")
@@ -151,8 +151,7 @@ class MyGame(arcade.Window):
         self.player.center_y = PLAYER_START_Y
         
         # Add the player to the spritelist
-        self.scene.add_sprite_list_before("Player", "DecorationInFrontPlayer")
-        self.scene["Player"].insert(0, self.player)
+        self.scene.add_sprite('Player', self.player)
         # endregion
 
         #region enemy
@@ -162,7 +161,7 @@ class MyGame(arcade.Window):
 
         # Create physics engine
         self.physics_engine = arcade.PhysicsEnginePlatformer(
-            player_sprite = self.player, gravity_constant = 0, walls = [self.scene["Ground"], self.scene["Ice"]]
+            player_sprite = self.player, gravity_constant = 0, walls = [self.scene["Ground"], self.scene["Ice"], self.scene["InvisibleWalls"]]
         )
         self.friction = 1
 
@@ -381,7 +380,7 @@ class MyGame(arcade.Window):
         # Loop through collectibles hit.
         for collectible in collectible_hit_list:
             collectible.remove_from_sprite_lists()
-            self.item_pickup(collectible.properties["item"])
+            #self.item_pickup(collectible.properties["item"])
 
         self.score_text = f"Score: {int(self.score)}, there are {len(self.scene['Coins'])} remaining"
         

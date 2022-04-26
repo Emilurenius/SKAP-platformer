@@ -135,7 +135,7 @@ class MyGame(arcade.Window):
         self.score = 0
 
         # region Set up player
-        image_source = path("assets/images/Players/soup-still.png")
+        image_source = path("assets/images/Players/stand_still.png")
         self.player = arcade.Sprite(image_source, CHARACTER_SCALING, hit_box_algorithm='Simple')
         self.player.newJump = True
 

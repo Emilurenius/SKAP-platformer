@@ -10,8 +10,8 @@ def path(path):
     return os.path.realpath(f"{__file__}/../../{path}")
 
 # Initialize constant variables
-SCREEN_WIDTH = 1920
-SCREEN_HEIGHT = 1080
+SCREEN_WIDTH = 1920 #400
+SCREEN_HEIGHT = 1080 #225
 SCREEN_TITLE = "Skap plattformer"
 GRAVITY = 1
 
@@ -175,7 +175,7 @@ class MyGame(arcade.Window):
         self.player_camera.use()
 
         # draw sprites
-        self.scene.draw()
+        self.scene.draw(pixelated = True)
         # self.scene.draw_hit_boxes()
         # Draw GUI
         self.GUI_camera.use()

@@ -307,7 +307,6 @@ class MyGame(arcade.Window):
                 self.friction = 1
 
             elif ice_hit_list:
-                print("ICE")
                 self.friction = 0.1
 
             if self.player.change_x != 0:

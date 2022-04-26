@@ -344,12 +344,18 @@ class MyGame(arcade.Window):
             self.player, self.scene["Ladder"]
         )
 
+        # Coins
+        goal_hit_list = arcade.check_for_collision_with_list(
+            self.player, self.scene["Goal"]
+        )
+
         if ladder_hit_list:
             self.player.on_ladder = True
         else:
             self.player.on_ladder = False
 
-
+        if goal_hit_list:
+            print('Player touching goal!')
 
         # endregion
 

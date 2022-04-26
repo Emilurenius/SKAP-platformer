@@ -153,13 +153,13 @@ class MyGame(arcade.Window):
         self.player.center_y = PLAYER_START_Y
         
         # Add the player to the spritelist
-        self.scene["Player"].clear()
         self.scene.add_sprite("Player", self.player)
+        self.scene["Player"].pop(0)
         # endregion
 
         #region enemy
-        self.enemy = arcade.Sprite(image_source, CHARACTER_SCALING, hit_box_algorithm='Simple')
-        self.scene.add_sprite('Enemy', self.player)
+        #self.enemy = arcade.Sprite(image_source, CHARACTER_SCALING, hit_box_algorithm='Simple')
+        #self.scene.add_sprite('Enemy', self.player)
         #endregion
 
         # Create physics engine

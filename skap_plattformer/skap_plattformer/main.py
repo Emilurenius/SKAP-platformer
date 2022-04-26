@@ -131,7 +131,7 @@ class MyGame(arcade.Window):
         # from the map as SpriteLists in the scene in the proper order.
         self.scene = arcade.Scene.from_tilemap(self.tile_map)
         self.end_of_map = self.tile_map.width * GRID_PIXEL_SIZE
-
+        self.scene["InvisibleWalls"].visible = False
         self.score = 0
 
         # region Set up player

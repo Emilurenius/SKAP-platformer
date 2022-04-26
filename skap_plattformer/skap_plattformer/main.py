@@ -13,7 +13,7 @@ def path(path):
 SCREEN_WIDTH = 1800
 SCREEN_HEIGHT = 880
 SCREEN_TITLE = "Skap plattformer"
-GRAVITY = 1
+GRAVITY = 1.5
 
 # Player start position
 PLAYER_START_Y = 100
@@ -21,10 +21,9 @@ PLAYER_START_X = 100
 
 #Pixels per frame
 PLAYER_WALK_SPEED = 8
-PLAYER_CLIMB_SPEED = 4
+PLAYER_CLIMB_SPEED = 6
 PLAYER_JUMP_SPEED = 15
-PLAYER_COMBO_JUMP_BOOST = 2
-PLAYER_COMBO_JUMP_TIMER = 7
+PLAYER_FLOATY_JUMP_TIME = 15
 PLAYER_MAX_JUMP_COMBO = 2
 
 # Pixels per frame per frame
@@ -138,8 +137,9 @@ class MyGame(arcade.Window):
         image_source = path("assets/images/skapning-export.png")
         self.player = arcade.Sprite(image_source, CHARACTER_SCALING, hit_box_algorithm='Simple')
         self.player.newJump = True
-        self.player.combo_jump_timer = 0
-        self.player.combo_jumps = 0
+
+        self.player.floating = False
+        self.player.floaty_jump_timer = 0
         self.player.on_ladder = False
         self.player.on_ground = False
         
@@ -169,7 +169,7 @@ class MyGame(arcade.Window):
 
         # draw sprites
         self.scene.draw()
-        self.scene.draw_hit_boxes()
+        # self.scene.draw_hit_boxes()
         # Draw GUI
         self.GUI_camera.use()
 
@@ -203,32 +203,17 @@ class MyGame(arcade.Window):
         
         # region Useful variables for movement
         self.player.on_ground = self.physics_engine.can_jump()
-        # endregion
 
-        # Gravity
-        if not self.player.on_ground:
-            if self.player.on_ladder:
-                if self.player.change_y != 0:
-                    if self.player.change_y > 0:
-                        self.player.change_y -= 2
-                        if self.player.change_y < 0: 
-                            self.player.change_y = 0
-                    else:
-                        self.player.change_y += 2
-                        if self.player.change_y > 0: 
-                            self.player.change_y = 0
-            else:
-                self.player.change_y -= GRAVITY
-                self.friction = 1
+        # endregion
 
         # region Jump mechanics
         if self.player.on_ground and not self.player.on_ladder:
 
-            #Decrement combo timer while you're on the ground
-            self.player.combo_jump_timer -= 1
             
             if self.player.newJump:
                 if self.up_pressed and not self.down_pressed:
+                    self.player.floaty_jump_timer = 0
+                    self.player.floating = True
                     """
                     Jump mechanics:
                     If JUMP_DIFFICULTY is 0, you can constantly jump by holding its key
@@ -241,24 +226,9 @@ class MyGame(arcade.Window):
                     if self.physics_engine.can_jump():
                         if JUMP_DIFFICULTY == 1:
                             self.player.newJump = False
-
-                        if self.player.combo_jump_timer > 0:
-                            if self.player.combo_jumps < 2:
-                                self.physics_engine.jump(PLAYER_JUMP_SPEED+PLAYER_COMBO_JUMP_BOOST*self.player.combo_jumps)
-                                arcade.play_sound(self.jump_sound)
-                            else:
-                                arcade.play_sound(self.big_jump_sound)
-                                self.physics_engine.jump(PLAYER_JUMP_SPEED+PLAYER_COMBO_JUMP_BOOST*self.player.combo_jumps+5)
-                        else:
-                            self.player.combo_jumps = 0
-                            self.physics_engine.jump(PLAYER_JUMP_SPEED)
-                            arcade.play_sound(self.jump_sound)
-
-                        self.player.combo_jumps += 1
-                        if self.player.combo_jumps > PLAYER_MAX_JUMP_COMBO:
-                            self.player.combo_jumps = PLAYER_MAX_JUMP_COMBO
-
-                        self.player.combo_jump_timer = PLAYER_COMBO_JUMP_TIMER
+                    
+                        self.physics_engine.jump(PLAYER_JUMP_SPEED)
+                        arcade.play_sound(self.jump_sound)
         
         if self.player.on_ladder:
             if self.up_pressed and not self.down_pressed:
@@ -267,7 +237,30 @@ class MyGame(arcade.Window):
                 self.player.change_y = -PLAYER_CLIMB_SPEED
 
 
-        
+        # Gravity
+        if not self.player.on_ground:
+            if self.player.floating:
+                if self.player.floaty_jump_timer > PLAYER_FLOATY_JUMP_TIME or not self.up_pressed:
+                    self.player.floating = False
+                    if self.player.on_ladder:
+                        if self.player.change_y != 0:
+                            if self.player.change_y > 0:
+                                self.player.change_y -= 2
+                                if self.player.change_y < 0: 
+                                    self.player.change_y = 0
+                            else:
+                                self.player.change_y += 2
+                                if self.player.change_y > 0: 
+                                    self.player.change_y = 0
+                    else:
+                        self.player.change_y -= GRAVITY
+                        self.friction = 1
+                else:
+                    self.player.floaty_jump_timer += 1
+            
+            else:
+                self.player.change_y -= GRAVITY
+
         if not self.up_pressed:
             self.player.newJump = True
         
@@ -378,6 +371,7 @@ class MyGame(arcade.Window):
             x += 1
         #Move the player
         self.player_move()
+
 
         # Move the camera 
         self.center_camera_on_player()

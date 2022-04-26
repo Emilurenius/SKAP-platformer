@@ -10,10 +10,10 @@ def path(path):
     return os.path.realpath(f"{__file__}/../../{path}")
 
 # Initialize constant variables
-SCREEN_WIDTH = 1800
-SCREEN_HEIGHT = 880
+SCREEN_WIDTH = 1920
+SCREEN_HEIGHT = 1080
 SCREEN_TITLE = "Skap plattformer"
-GRAVITY = 1.5
+GRAVITY = 1
 
 # Player start position
 PLAYER_START_Y = 100
@@ -44,7 +44,7 @@ TIMER_FROM_RIGHT = 41
 
 
 # region sprite scaling
-CHARACTER_SCALING = 1
+CHARACTER_SCALING = 2
 TILE_SCALING = 0.5
 COIN_SCALING = 0.5
 SPRITE_PIXEL_SIZE = 256

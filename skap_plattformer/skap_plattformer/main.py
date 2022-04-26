@@ -329,19 +329,20 @@ class MyGame(arcade.Window):
         #This should be called 60 times per second
 
         if self.playerAnimation == 'left':
+            if self.playerAnimationFrame > 35:
+                print('resetting position')
+                self.playerAnimationFrame = 0
             self.player.texture = arcade.load_texture(path("assets/images/Players/walking_60frames.png"),
                                                       31 * self.playerAnimationFrame, 0, 31, 47,
                                                       hit_box_algorithm='Detailed')
             self.playerAnimationFrame += 1
-            if self.playerAnimationFrame > 35:
-                self.playerAnimationFrame = 0
         else:
+            if self.playerAnimationFrame > 49:
+                self.playerAnimationFrame = 0
             self.player.texture = arcade.load_texture(path("assets/images/Players/idle_animation_basic_60_fps.png"),
                                                       25 * self.playerAnimationFrame, 0, 25, 45,
                                                       hit_box_algorithm='Detailed')
             self.playerAnimationFrame += 1
-            if self.playerAnimationFrame > 49:
-                self.playerAnimationFrame = 0
         
         self.physics_engine.update()
         

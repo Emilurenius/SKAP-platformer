@@ -160,7 +160,7 @@ class MyGame(arcade.Window):
 
         # Create physics engine
         self.physics_engine = arcade.PhysicsEnginePlatformer(
-            player_sprite = self.player, gravity_constant = walls = [self.scene["Ground"], self.scene["Ice"]]
+            player_sprite = self.player, gravity_constant = 0, walls = [self.scene["Ground"], self.scene["Ice"]]
         )
         self.friction = 1
 

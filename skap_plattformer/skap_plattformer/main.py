@@ -376,7 +376,7 @@ class MyGame(arcade.Window):
         self.total_time += delta_time
         minutes = int(self.total_time)//60
         seconds = int(self.total_time)%60
-        self.milliseconds = int((self.total_time - seconds)*100//1)
+        self.milliseconds = int((self.total_time - seconds - minutes*60)*100//1)
         self.clock_text = f"{minutes}:{seconds}"
         x = 1
         self.real_timer_from_right += 7

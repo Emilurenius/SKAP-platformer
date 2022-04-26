@@ -104,6 +104,7 @@ class MyGame(arcade.Window):
         self.up_pressed = False
         self.down_pressed = False
         self.followPlayer = True
+        self.playerAnimationFrame = 0
 
     def setup(self):
         # Game setup happens here, and calling this function should restart the game
@@ -145,6 +146,7 @@ class MyGame(arcade.Window):
         self.player.on_ground = False
         self.followPlayer = True
         self.playerAnimation = 'idle' # can have values 'left' 'right' 'jump' and 'idle'
+        self.playerAnimationFrame = 0
         
         # Place the player
         self.player.center_x = PLAYER_START_X
@@ -325,6 +327,21 @@ class MyGame(arcade.Window):
 
     def on_update(self, delta_time):
         #This should be called 60 times per second
+
+        if self.playerAnimation == 'left':
+            self.player.texture = arcade.load_texture(path("assets/images/Players/walking_60frames.png"),
+                                                      31 * self.playerAnimationFrame, 0, 31, 47,
+                                                      hit_box_algorithm='Detailed')
+            self.playerAnimationFrame += 1
+            if self.playerAnimationFrame > 35:
+                self.playerAnimationFrame = 0
+        else:
+            self.player.texture = arcade.load_texture(path("assets/images/Players/idle_animation_basic_60_fps.png"),
+                                                      25 * self.playerAnimationFrame, 0, 25, 45,
+                                                      hit_box_algorithm='Detailed')
+            self.playerAnimationFrame += 1
+            if self.playerAnimationFrame > 49:
+                self.playerAnimationFrame = 0
         
         self.physics_engine.update()
         

@@ -329,7 +329,7 @@ class MyGame(arcade.Window):
         if self.player.center_y < -100:
             self.player.center_y = PLAYER_START_Y
             self.player.center_x = PLAYER_START_X
-
+            self.followPlayer = True
 
         # region Check for misc collisions
         
@@ -364,7 +364,8 @@ class MyGame(arcade.Window):
             # Remove the coin
             coin.remove_from_sprite_lists()
             # Play a sound
-            arcade.play_sound(self.collect_coin_sound)
+            #arcade.play_sound(self.collect_coin_sound)
+            arcade.play_sound(self.land_sound)
             # Add one to the score
             self.score += coin.properties["coin_value"]
 

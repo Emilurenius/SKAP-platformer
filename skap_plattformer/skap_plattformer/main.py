@@ -105,6 +105,9 @@ class MyGame(arcade.Window):
         self.down_pressed = False
         self.followPlayer = True
         self.playerAnimationFrame = 0
+        self.playerAnimation = 'idle'
+        self.playerJumping = False
+        self.ticksJumped = 0
 
     def setup(self):
         # Game setup happens here, and calling this function should restart the game
@@ -145,8 +148,10 @@ class MyGame(arcade.Window):
         self.player.on_ladder = False
         self.player.on_ground = False
         self.followPlayer = True
-        self.playerAnimation = 'idle' # can have values 'left' 'right' 'jump' and 'idle'
+        self.playerAnimation = 'idle' # can have values 'left' 'right' 'jump' 'falling' 'landed' and 'idle'
         self.playerAnimationFrame = 0
+        self.playerJumping = False
+        self.ticksJumped = 0
         
         # Place the player
         self.player.center_x = PLAYER_START_X
@@ -219,8 +224,6 @@ class MyGame(arcade.Window):
 
         # region Jump mechanics
         if self.player.on_ground and not self.player.on_ladder:
-
-            
             if self.player.newJump:
                 if self.up_pressed and not self.down_pressed:
                     self.player.floaty_jump_timer = 0
@@ -239,6 +242,7 @@ class MyGame(arcade.Window):
                             self.player.newJump = False
                     
                         self.physics_engine.jump(PLAYER_JUMP_SPEED)
+                        self.playerJumping = True
                         arcade.play_sound(self.jump_sound)
         
         if self.player.on_ladder:
@@ -328,8 +332,22 @@ class MyGame(arcade.Window):
 
     def on_update(self, delta_time):
         #This should be called 60 times per second
+        # region animation
+        if self.playerJumping:
+            if self.playerAnimationFrame > 37:
+                self.playerAnimationFrame = 0
+                
+            if self.ticksJumped > 37:
+                print('Stopped jumping')
+                self.playerJumping = False
+                self.ticksJumped = 0
 
-        if self.playerAnimation == 'left':
+            self.player.texture = arcade.load_texture(path("assets/images/Players/jump_right_up_60_fps.png"),
+                                                      34 * self.playerAnimationFrame, 0, 34, 51,
+                                                      hit_box_algorithm='Detailed')
+            self.playerAnimationFrame += 1
+            self.ticksJumped += 1
+        elif self.playerAnimation == 'left':
             if self.playerAnimationFrame > 35:
                 self.playerAnimationFrame = 0
             self.player.texture = arcade.load_texture(path("assets/images/Players/walking_60frames.png"),
@@ -350,7 +368,8 @@ class MyGame(arcade.Window):
                                                       25 * self.playerAnimationFrame, 0, 25, 45,
                                                       hit_box_algorithm='Detailed')
             self.playerAnimationFrame += 1
-        
+        # endregion
+
         self.physics_engine.update()
         
         # Check if player fell off the map
